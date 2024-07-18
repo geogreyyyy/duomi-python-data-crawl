@@ -30,6 +30,7 @@ timeArray = time.localtime(time.time())
 otherStyleTime = time.strftime("%Y%m%d", timeArray)
 numStyleTime = time.strftime("%H%M%S", timeArray)
 
+
 # 从echotik获取用户列表
 def get_echotik_users_list(start, page):
     time_type = 'daily'  # daily:日榜 weekly:周榜 monthly:月榜
@@ -42,7 +43,7 @@ def get_echotik_users_list(start, page):
            + "time_type=" + time_type
            + "&time_range=" + time_range
            + "&page=" + str(start)
-           + "&influencer_role="+influencer_role
+           + "&influencer_role=" + influencer_role
            + "&influencer_categories="
            + "&product_categories=" + product_categories
            + "&per_page=" + str(page))
@@ -67,7 +68,7 @@ def get_echotik_users_list(start, page):
     res_data = json.loads(response_echotik_users.text)
     data_list = res_data.get("data")
     # logging.logger.info(data_list)
-    users_unique_id_list = []
+    users_unique_id_list = []  # 达人id
     for data in data_list:
         users_unique_id_list.append(data.get("unique_id"))
     logging.logger.debug("爬取Echotik达人列表,本次数据" + str(len(users_unique_id_list)) + "条...\n")
@@ -174,7 +175,6 @@ def paginate(total_pages, pages_per_range):
 def start_collect_echotik_user_id(page):
     ranges = paginate(page, 50)
     user_list = []
-    user_data_split = paginate_user_id_list(len(ranges), thread_num)
     for page_data in ranges:
         user_list.extend(get_echotik_users_list(page_data[0], page_data[1]))
         if int(redis_client.get(redis_key_response_num)) >= 10:
@@ -241,8 +241,9 @@ if __name__ == "__main__":
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")
     else:
-        excel.save_data_excel(result_data, "TikTok用户画像-" + str(otherStyleTime)+"-"+ str(numStyleTime) + "-" + str(len(
-            result_data)) + "条")
+        excel.save_data_excel(result_data,
+                              "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
+                                  result_data)) + "条")
 
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

@@ -192,3 +192,15 @@
 
 2024-07-18 18:36:03,299 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:247] - INFO: 爬取数据完成.
 2024-07-18 18:36:03,299 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:248] - INFO: 耗时:8.6474s
+2024-07-18 18:44:54,817 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:188] - INFO: 获取用户列表完成，总共获得1000条数据,其中重复:0条，去重共1000条.
+
+2024-07-18 18:46:35,345 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:247] - INFO: 爬取数据完成.
+2024-07-18 18:46:35,346 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:248] - INFO: 耗时:133.4305s
+2024-07-18 18:55:42,299 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:201] - INFO: 获取用户列表完成，总共获得50条数据,其中重复:0条，去重共50条.
+
+2024-07-18 18:55:47,489 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:261] - INFO: 爬取数据完成.
+2024-07-18 18:55:47,489 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:262] - INFO: 耗时:6.9547s
+2024-07-18 18:57:29,632 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:188] - INFO: 获取用户列表完成，总共获得50条数据,其中重复:0条，去重共50条.
+
+2024-07-18 18:57:34,745 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:248] - INFO: 爬取数据完成.
+2024-07-18 18:57:34,745 - /Users/wujunnan/duomi-python-data-crawl/test.python-html-thread.py[line:249] - INFO: 耗时:7.0011s

@@ -25,17 +25,20 @@ redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
 # log初始化
 logging = log.Logger('all.log', level='INFO')
-
+# 时间格式化
+timeArray = time.localtime(time.time())
+otherStyleTime = time.strftime("%Y%m%d", timeArray)
+numStyleTime = time.strftime("%H%M%S", timeArray)
 
 # 从echotik获取用户列表
 def get_echotik_users_list(start, page):
     time_type = 'daily'  # daily:日榜 weekly:周榜 monthly:月榜
-    time_range = '20240717'  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
+    time_range = str(otherStyleTime)  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
     product_categories = ""
     influencer_role = '2'  # 爬取板块
-    currency = 'VND'  # USD美国 VND越南 THB泰国 MYR马来西亚 PHP菲律宾
-    region = 'VN'  # US美国 VN越南 TH泰国 MY马来西亚 PH菲律宾
-    url = ("https://echotik.live/api/v1/data/influencers/leaderboard/champion-sales?"
+    currency = 'USD'  # USD美国 VND越南 THB泰国 MYR马来西亚 PHP菲律宾
+    region = 'US'  # US美国 VN越南 TH泰国 MY马来西亚 PH菲律宾
+    url = ("https://echotik.live/api/v1/data/influencers?"
            + "time_type=" + time_type
            + "&time_range=" + time_range
            + "&page=" + str(start)
@@ -238,7 +241,8 @@ if __name__ == "__main__":
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")
     else:
-        excel.save_data_excel(result_data, "TikTok用户画像-" + str(int(time.time())) + "-" + str(len(result_data)) + "条")
+        excel.save_data_excel(result_data, "TikTok用户画像-" + str(otherStyleTime)+"-"+ str(numStyleTime) + "-" + str(len(
+            result_data)) + "条")
 
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

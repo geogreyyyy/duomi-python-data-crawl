@@ -6,6 +6,8 @@ import time
 import re
 import redis
 from concurrent.futures import ThreadPoolExecutor
+import log
+import excel
 
 # 线程池初始化
 pool = ThreadPoolExecutor(max_workers=8)
@@ -16,89 +18,56 @@ redis_client = redis.Redis(host="localhost", port=6379, db=0)
 redis_key_name = "python_data_crawl"
 redis_key_error_num = redis_key_name + "_error_num"
 redis_key_response_num = redis_key_name + "_response_num"
+redis_key_tik_tok_request_error_num = redis_key_name + "_tik_tok_request_error_num"
 redis_client.set(redis_key_error_num, 0)
 redis_client.set(redis_key_response_num, 0)
+redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
-
-# excel内样式
-def setting_style_xls_body():
-    body_style = xlwt.XFStyle()
-    font = xlwt.Font()
-    # 字体大小（20是基准单位，18表示18px）
-    font.height = 14 * 18
-    # 是否使用粗体
-    font.bold = False
-    # 是否使用斜体
-    font.italic = False
-    # 字体颜色
-    font.colour_index = 0
-    body_style.font = font
-    align = xlwt.Alignment()
-    # 垂直方向的对齐方式
-    align.vert = xlwt.Alignment.VERT_CENTER
-    # 水平方向的对齐方式
-    align.horz = xlwt.Alignment.HORZ_CENTER
-    body_style.alignment = align
-    return body_style
-
-
-# excel内样式
-def setting_style_xls_header():
-    header_style = xlwt.XFStyle()
-    pattern = xlwt.Pattern()
-    pattern.pattern = xlwt.Pattern.SOLID_PATTERN
-    # 0 - 黑色、1 - 白色、2 - 红色、3 - 绿色、4 - 蓝色、5 - 黄色、6 - 粉色、7 - 青色
-    pattern.pattern_fore_colour = 4
-    font = xlwt.Font()
-    # 字体大小（20是基准单位，18表示18px）
-    font.height = 15 * 18
-    # 是否使用粗体
-    font.bold = False
-    # 是否使用斜体
-    font.italic = False
-    # 字体颜色
-    font.colour_index = 1
-    header_style.font = font
-    header_style.pattern = pattern
-    align = xlwt.Alignment()
-    # 垂直方向的对齐方式
-    align.vert = xlwt.Alignment.VERT_CENTER
-    # 水平方向的对齐方式
-    align.horz = xlwt.Alignment.HORZ_CENTER
-    header_style.alignment = align
-    return header_style
+# log初始化
+logging = log.Logger('all.log', level='INFO')
 
 
 # 从echotik获取用户列表
 def get_echotik_users_list(start, page):
     time_type = 'daily'  # daily:日榜 weekly:周榜 monthly:月榜
-    time_range = '20240715'  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
+    time_range = '20240717'  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
     product_categories = ""
-    url = ("https://echotik.live/api/v1/data/influencers/leaderboard/champion-sales?time_type=" + time_type
-           + "&time_range=" + time_range +
-           "&page=" + str(start) + "&influencer_role=&influencer_categories=&product_categories=" + product_categories
-           + "&per_page=" + str(
-                page))
+    influencer_role = '2'  # 爬取板块
+    currency = 'VND'  # USD美国 VND越南 THB泰国 MYR马来西亚 PHP菲律宾
+    region = 'VN'  # US美国 VN越南 TH泰国 MY马来西亚 PH菲律宾
+    url = ("https://echotik.live/api/v1/data/influencers/leaderboard/champion-sales?"
+           + "time_type=" + time_type
+           + "&time_range=" + time_range
+           + "&page=" + str(start)
+           + "&influencer_role="+influencer_role
+           + "&influencer_categories="
+           + "&product_categories=" + product_categories
+           + "&per_page=" + str(page))
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/71.0.3578.98 Safari/537.36',
-        'authorization': 'Bearer 267006|bvJXZYqIlwz9YRB9lyjY7BXchtXetfU2YJUKWmFR'
+        'authorization': 'Bearer 267006|bvJXZYqIlwz9YRB9lyjY7BXchtXetfU2YJUKWmFR',
+        'x-currency': currency,
+        'x-region': region,
     }
+    # logging.logger.info("请求url："+url)
     global response_echotik_users
     try:
         response_echotik_users = requests.get(url=url, headers=headers)
-    except:
-        print("\033[31mEchotik官网获取数据失败，请检查网络!'\033[0m")
+    except Exception as ex:
+        logging.logger.error(ex)
+        logging.logger.error("\033[31mEchotik官网获取数据失败，请检查网络!'\033[0m")
         # 失败计数，超过10次失败结束
         redis_client.incr(redis_key_error_num, 1)
         return []
     redis_client.get(redis_key_error_num).decode()
     res_data = json.loads(response_echotik_users.text)
     data_list = res_data.get("data")
-    # print(data_list)
+    # logging.logger.info(data_list)
     users_unique_id_list = []
     for data in data_list:
         users_unique_id_list.append(data.get("unique_id"))
+    logging.logger.debug("爬取Echotik达人列表,本次数据" + str(len(users_unique_id_list)) + "条...\n")
     print("爬取Echotik达人列表,本次数据" + str(len(users_unique_id_list)) + "条...\n")
     if len(users_unique_id_list) == 0:
         # 0条数据超过10次，代表没有数据
@@ -108,6 +77,7 @@ def get_echotik_users_list(start, page):
     return users_unique_id_list
 
 
+# 设置用户属性
 def set_user_info(user_data, user_state):
     user_info_array = ['0', '0', '0', '0', '0', '0', '0', '0']
     if user_data is None:
@@ -139,9 +109,10 @@ def set_user_info(user_data, user_state):
         return user_info_array
 
 
+# 爬取tiktok主页
 def get_tiktok_user_data(user_unique_id_list):
     warit_excel_data = []
-    # print(user_unique_id_list)
+    # logging.logger.info(user_unique_id_list)
     for uniq_id in user_unique_id_list:
         url = 'https://www.tiktok.com/@' + str(uniq_id) + '?lang=en'
         # 请求头必须添加
@@ -152,8 +123,9 @@ def get_tiktok_user_data(user_unique_id_list):
         global response
         try:
             response = requests.get(url=url, headers=headers)
-        except:
-            print("\033[31m用户：" + uniq_id + "TK官网无法访问，请检查网络!'\033[0m")
+        except Exception as ex:
+            logging.logger.error(ex)
+            logging.logger.error("\033[31m用户：" + uniq_id + "TK官网无法访问，请检查网络!'\033[0m")
             continue
         # 获取页面原始编码格式
         page_text = response.text
@@ -162,7 +134,9 @@ def get_tiktok_user_data(user_unique_id_list):
         try:
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
+            logging.logger.debug("爬取Tiktok主页中...\n")
             print("爬取Tiktok主页中...\n")
+            logging.logger.debug("获取TK用户" + str(uniq_id) + "主页数据\n")
             print("获取TK用户" + str(uniq_id) + "主页数据\n")
             user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
             if user_info is None:
@@ -171,11 +145,17 @@ def get_tiktok_user_data(user_unique_id_list):
             user_state = user_info.get('stats')  # 用户粉丝 点赞数  朋友数
             warit_excel_data.append(set_user_info(user_data, user_state))
         except Exception as ex:
-            print(ex)
+            redis_client.incr(redis_key_tik_tok_request_error_num, 1)
+            if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 20:
+                logging.logger.error('TikTok官网失败超过次数，请检查网络!')
+                break
+            logging.logger.error(ex)
             continue
+        redis_client.set(redis_key_tik_tok_request_error_num, 0)
     return warit_excel_data
 
 
+# 把总数据量拆分成50每页的数据
 def paginate(total_pages, pages_per_range):
     ranges = []
     for i in range(1, total_pages // pages_per_range + 1):
@@ -187,6 +167,7 @@ def paginate(total_pages, pages_per_range):
     return ranges
 
 
+# 开始爬取echotik网站
 def start_collect_echotik_user_id(page):
     ranges = paginate(page, 50)
     user_list = []
@@ -194,35 +175,21 @@ def start_collect_echotik_user_id(page):
     for page_data in ranges:
         user_list.extend(get_echotik_users_list(page_data[0], page_data[1]))
         if int(redis_client.get(redis_key_response_num)) >= 10:
-            print("\033[31m EchoTik网站用户列表已全部爬取完成'\033[0m")
+            logging.logger.info("\033[31m EchoTik网站用户列表已全部爬取完成'\033[0m")
             break
         if int(redis_client.get(redis_key_error_num)) >= 10:
-            print("\033[31m EchoTik网站连接失败，请检查网络'\033[0m")
+            logging.logger.error("\033[31m EchoTik网站连接失败，请检查网络'\033[0m")
             break
-    print("获取用户列表完成，总共获得" + str(len(user_list)) + "条数据\n")
-    return user_list
+    unique_user_list = list(set(user_list))
+    same_user_num = len(user_list) - len(unique_user_list)
+    logging.logger.info(
+        "获取用户列表完成，总共获得" + str(len(user_list)) + "条数据,其中重复:" + str(same_user_num) + "条，去重共" + str(
+            len(
+                unique_user_list)) + "条.\n")
+    return unique_user_list
 
 
-def save_data_excel(warit_excel_data, filename):
-    wb = xlwt.Workbook()
-    # 创建工作表对象（Worksheet）
-    sheet_save_name = time.strftime("%Y-%m-%d", time.localtime())
-    sheet = wb.add_sheet(sheet_save_name)
-    header_style = setting_style_xls_header()
-    body_style = setting_style_xls_body()
-    # 添加表头数据
-    # 0:id 1:uniqueId 2:nickname  3:signature
-    titles = ('User Id', 'Unique Id', '达人名称', 'email', '粉丝数量', '关注数量', '获赞数', '发布视频数量')
-    for index, title in enumerate(titles):
-        sheet.write(0, index, title, header_style)
-    for row in range(len(warit_excel_data)):
-        for col in range(len(titles)):
-            sheet.write(row + 1, col, warit_excel_data[row][col], body_style)
-            sheet.col(col).width = 25 * 300
-    # 保存Excel工作簿
-    wb.save(filename + '.xls')
-
-
+# 分割用户id列表给多线程
 def paginate_user_id_list(total, N):
     if N <= 0:
         raise ValueError("N必须大于0")
@@ -268,7 +235,10 @@ if __name__ == "__main__":
     result_data.extend(thread7.result())
     result_data.extend(thread8.result())
     pool.shutdown()
-    save_data_excel(result_data, "TikTok用户画像-" + str(int(time.time())) + "-" + str(len(result_data)) + "条")
+    if len(result_data) == 0:
+        logging.logger.error("爬取数据为空！不存储Excel")
+    else:
+        excel.save_data_excel(result_data, "TikTok用户画像-" + str(int(time.time())) + "-" + str(len(result_data)) + "条")
 
-    print("爬取数据完成.")
-    print(f'耗时:{time.time() - t:.4f}s')
+    logging.logger.info("爬取数据完成.")
+    logging.logger.info(f'耗时:{time.time() - t:.4f}s')

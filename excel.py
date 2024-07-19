@@ -2,6 +2,7 @@ import xlwt
 import time
 import os
 
+
 # excel内样式
 def setting_style_xls_body():
     body_style = xlwt.XFStyle()
@@ -67,7 +68,10 @@ def save_data_excel(warit_excel_data, filename):
     body_style = setting_style_xls_body()
     # 添加表头数据
     # 0:id 1:uniqueId 2:nickname  3:signature
-    titles = ('User Id', 'Unique Id', '达人名称', 'email', '粉丝数量', '关注数量', '获赞数', '发布视频数量')
+    titles = (
+        'User Id', 'Unique Id', '达人名称', 'email', '达人标签', '带货标签', '30天涨粉量', '粉丝数量', '关注数量',
+        '获赞数',
+        '发布视频数量')
     for index, title in enumerate(titles):
         sheet.write(0, index, title, header_style)
     for row in range(len(warit_excel_data)):
@@ -76,5 +80,4 @@ def save_data_excel(warit_excel_data, filename):
             sheet.col(col).width = 25 * 300
     # 保存Excel工作簿
     mkdir("excel")
-    wb.save("./excel/"+filename + '.xls')
-
+    wb.save("./excel/" + filename + '.xls')

@@ -1,21 +1,13 @@
-def paginate_5000(total,N):
-    if N <= 0:
-        raise ValueError("N必须大于0")
-    pages_per_range = total // N
-    remainder = total % N
-    ranges = []
-    start = 1
-    for i in range(N):
-        if i == N - 1:
-            end = start + pages_per_range + remainder - 1
-        else:
-            end = start + pages_per_range - 1
-        ranges.append((start, end))
-        start = end + 1
-    return ranges
-N = 5
-total = 4980
-ranges = paginate_5000(total,N)
+import argparse
 
-for range_ in ranges:
-    print(f"第{ranges.index(range_)+1}份：{range_[0]}-{range_[1]}")
+parser = argparse.ArgumentParser(description='argparse testing')
+parser.add_argument('--name', '-n', type=str, default="bk", required=True, help="a programmer's name")
+parser.add_argument('--age', '-a', type=int, default=35, help='age of the programmer')
+parser.add_argument('--sex', '-s', type=str, default='male')
+parser.add_argument('--favorite', '-f', type=str, nargs="+", required=False, help="favorite of the programmer")
+
+args = parser.parse_args()
+print(args.name)
+print(args.age)
+print(args.sex)
+print(args.favorite)

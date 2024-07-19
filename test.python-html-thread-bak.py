@@ -36,6 +36,9 @@ def get_echotik_users_list(start, page):
     time_type = 'daily'  # daily:日榜 weekly:周榜 monthly:月榜
     time_range = str(otherStyleTime)  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
     product_categories = ""
+    influencer_categories = "Entertainment"  # 达人分类 空：全部  Public+Figure：公众人物  Entertainment：娱乐  Beauty：颜值
+    # Personal+Blog：个人博客  Art：艺术  Music%2FDance：音乐/舞蹈  Fashion：时尚  Media：媒体  Sports：运动健身  Pets：宠物  Education：教育
+    # Baby：母婴  Food：美食
     influencer_role = '2'  # 爬取板块
     currency = 'USD'  # USD美国 VND越南 THB泰国 MYR马来西亚 PHP菲律宾
     region = 'US'  # US美国 VN越南 TH泰国 MY马来西亚 PH菲律宾
@@ -43,8 +46,8 @@ def get_echotik_users_list(start, page):
            + "time_type=" + time_type
            + "&time_range=" + time_range
            + "&page=" + str(start)
+           + "&influencer_categories=" + influencer_categories
            + "&influencer_role=" + influencer_role
-           + "&influencer_categories="
            + "&product_categories=" + product_categories
            + "&per_page=" + str(page))
     headers = {
@@ -53,8 +56,9 @@ def get_echotik_users_list(start, page):
         'authorization': 'Bearer 267006|bvJXZYqIlwz9YRB9lyjY7BXchtXetfU2YJUKWmFR',
         'x-currency': currency,
         'x-region': region,
+        'x-lang': 'zh-CN',
     }
-    # logging.logger.info("请求url："+url)
+    logging.logger.info("请求url："+url)
     global response_echotik_users
     try:
         response_echotik_users = requests.get(url=url, headers=headers)
@@ -83,7 +87,7 @@ def get_echotik_users_list(start, page):
 
 
 # 设置用户属性
-def set_user_info(user_data, user_state):
+def set_user_info(user_data, user_state, echo_tik_user_info):
     user_info_array = ['0', '0', '0', '0', '0', '0', '0', '0']
     if user_data is None:
         return user_info_array
@@ -96,7 +100,8 @@ def set_user_info(user_data, user_state):
             user_email = 'TK主页无邮箱信息'
         try:
             user_info_array = [user_data.get('id'), user_data.get('uniqueId'),
-                               user_data.get('nickname'), user_email]
+                               user_data.get('nickname'), user_email, echo_tik_user_info[1], echo_tik_user_info[2],
+                               echo_tik_user_info[3], ]
             if user_state is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
                 user_info_array.append(user_state.get('followerCount'))
@@ -139,17 +144,14 @@ def get_tiktok_user_data(user_unique_id_list):
         try:
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
-            logging.logger.debug("爬取Tiktok主页中...\n")
             print("爬取Tiktok主页中...\n")
-            logging.logger.debug("获取TK用户" + str(uniq_id[0]) + "主页数据\n")
             print("获取TK用户" + str(uniq_id[0]) + "主页数据\n")
             user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
             if user_info is None:
                 continue
             user_data = user_info.get("user")
             user_state = user_info.get('stats')  # 用户粉丝 点赞数  朋友数
-            # TODO 需要把达人标签和达人分类也加上
-            warit_excel_data.append(set_user_info(user_data, user_state))
+            warit_excel_data.append(set_user_info(user_data, user_state, uniq_id))
         except Exception as ex:
             redis_client.incr(redis_key_tik_tok_request_error_num, 1)
             if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 20:
@@ -178,19 +180,18 @@ def start_collect_echotik_user_id(page):
     ranges = paginate(page, 50)
     ls_data = []
     for page_data in ranges:
-        ls_data = get_echotik_users_list(page_data[0], page_data[1])
+        ls_data.extend(get_echotik_users_list(page_data[0], page_data[1]))
         if int(redis_client.get(redis_key_response_num)) >= 10:
             logging.logger.info("\033[31m EchoTik网站用户列表已全部爬取完成'\033[0m")
             break
         if int(redis_client.get(redis_key_error_num)) >= 10:
             logging.logger.error("\033[31m EchoTik网站连接失败，请检查网络'\033[0m")
             break
-    unique_users_list = list(set(ls_data))
+    unique_users_list = list(set([tuple(t) for t in ls_data]))
     same_user_num = len(ls_data) - len(unique_users_list)
     logging.logger.info(
         "获取用户列表完成，总共获得" + str(len(ls_data)) + "条数据,其中重复:" + str(same_user_num) + "条，去重共" + str(
-            len(
-                unique_users_list)) + "条.\n")
+            len(unique_users_list)) + "条.\n")
     return unique_users_list
 
 

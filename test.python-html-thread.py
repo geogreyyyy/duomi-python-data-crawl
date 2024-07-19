@@ -36,6 +36,11 @@ def get_echotik_users_list(start, page):
     time_type = 'daily'  # daily:日榜 weekly:周榜 monthly:月榜
     time_range = str(otherStyleTime)  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
     product_categories = ""
+    influencer_categories = "Public+Figure"
+    influencer_categories_CN = "公众人物"
+    # 达人分类 空：全部  Public+Figure：公众人物  Entertainment：娱乐  Beauty：颜值
+    # Personal+Blog：个人博客  Art：艺术  Music%2FDance：音乐/舞蹈  Fashion：时尚  Media：媒体  Sports：运动健身  Pets：宠物  Education：教育
+    # Baby：母婴  Food：美食
     influencer_role = '2'  # 爬取板块
     currency = 'USD'  # USD美国 VND越南 THB泰国 MYR马来西亚 PHP菲律宾
     region = 'US'  # US美国 VN越南 TH泰国 MY马来西亚 PH菲律宾
@@ -43,6 +48,7 @@ def get_echotik_users_list(start, page):
            + "time_type=" + time_type
            + "&time_range=" + time_range
            + "&page=" + str(start)
+           + "&influencer_categories=" + influencer_categories
            + "&influencer_role=" + influencer_role
            + "&influencer_categories="
            + "&product_categories=" + product_categories

@@ -86,7 +86,7 @@ def get_echotik_users_list(start, page):
     users_list = []  # 达人id
     for data in data_list:
         users_list.append(
-            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count")])
+            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count"), data.get("total_product_cnt")])
     logging.logger.debug("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
     print("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
     if len(users_list) == 0:
@@ -112,7 +112,7 @@ def set_user_info(user_data, user_state, echo_tik_user_info):
         try:
             user_info_array = [user_data.get('id'), user_data.get('uniqueId'),
                                user_data.get('nickname'), user_email, echo_tik_user_info[1], echo_tik_user_info[2],
-                               echo_tik_user_info[3], ]
+                               echo_tik_user_info[3], echo_tik_user_info[4],]
             if user_state is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
                 user_info_array.append(user_state.get('followerCount'))
@@ -243,23 +243,23 @@ if __name__ == "__main__":
     ranges = paginate_user_id_list(len(user_list), thread_num)
     result_data = []
     # 固定8个线程
-    # thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-    # thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
-    # thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
-    # thread4 = pool.submit(get_tiktok_user_data, user_list[ranges[3][0]:ranges[3][1]])
-    # thread5 = pool.submit(get_tiktok_user_data, user_list[ranges[4][0]:ranges[4][1]])
-    # thread6 = pool.submit(get_tiktok_user_data, user_list[ranges[5][0]:ranges[5][1]])
-    # thread7 = pool.submit(get_tiktok_user_data, user_list[ranges[6][0]:ranges[6][1]])
-    # thread8 = pool.submit(get_tiktok_user_data, user_list[ranges[7][0]:ranges[7][1]])
-    #
-    # result_data.extend(thread1.result())
-    # result_data.extend(thread2.result())
-    # result_data.extend(thread3.result())
-    # result_data.extend(thread4.result())
-    # result_data.extend(thread5.result())
-    # result_data.extend(thread6.result())
-    # result_data.extend(thread7.result())
-    # result_data.extend(thread8.result())
+    thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
+    thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
+    thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
+    thread4 = pool.submit(get_tiktok_user_data, user_list[ranges[3][0]:ranges[3][1]])
+    thread5 = pool.submit(get_tiktok_user_data, user_list[ranges[4][0]:ranges[4][1]])
+    thread6 = pool.submit(get_tiktok_user_data, user_list[ranges[5][0]:ranges[5][1]])
+    thread7 = pool.submit(get_tiktok_user_data, user_list[ranges[6][0]:ranges[6][1]])
+    thread8 = pool.submit(get_tiktok_user_data, user_list[ranges[7][0]:ranges[7][1]])
+
+    result_data.extend(thread1.result())
+    result_data.extend(thread2.result())
+    result_data.extend(thread3.result())
+    result_data.extend(thread4.result())
+    result_data.extend(thread5.result())
+    result_data.extend(thread6.result())
+    result_data.extend(thread7.result())
+    result_data.extend(thread8.result())
     pool.shutdown()
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")

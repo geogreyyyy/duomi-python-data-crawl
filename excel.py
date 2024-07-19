@@ -69,7 +69,7 @@ def save_data_excel(warit_excel_data, filename):
     # 添加表头数据
     # 0:id 1:uniqueId 2:nickname  3:signature
     titles = (
-        'User Id', 'Unique Id', '达人名称', 'email', '达人标签', '带货标签', '30天涨粉量', '粉丝数量', '关注数量',
+        'User Id', 'Unique Id', '达人名称', 'email', '达人标签', '带货标签', '30天涨粉量', '带货商品数', '粉丝数量', '关注数量',
         '获赞数',
         '发布视频数量')
     for index, title in enumerate(titles):

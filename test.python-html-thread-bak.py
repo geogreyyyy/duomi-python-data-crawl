@@ -110,11 +110,11 @@ def get_echotik_users_list(start, page):
 # 设置用户属性
 def set_user_info(user_data, user_state, create_user_info):
     user_info_array = ['0', '0', '0', '0', '0', '0', '0', '0']
-    print("------------------------------------------------------------------------------")
-    print(user_data)
-    print(user_state)
-    print(create_user_info)
-    print("------------------------------------------------------------------------------")
+    # print("------------------------------------------------------------------------------")
+    # print(user_data)
+    # print(user_state)
+    # print(create_user_info)
+    # print("------------------------------------------------------------------------------")
     if user_data is None:
         return user_info_array
     else:
@@ -266,22 +266,22 @@ def get_tiktok_shop_user_unique_id():
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': 'passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1721724521%7C8bf05cf21573e4b5cc0841bae2eeaa5e00ed9726a503542084d5441dac371d8a; odin_tt=b0f79cd90e6abf90cf0863a19e5d5af821e18e10201136dee92a67d7970ec8ce64cdfb12710012a623a8e2cb35047c9397f676775f27cb6568930ec81af5effa; sid_guard=9603917fd32b1e585f05e9604577af69%7C1721724522%7C5183997%7CSat%2C+21-Sep-2024+08%3A48%3A39+GMT; uid_tt=ff6558202655a020048bd2cfaae526dafc8bebb623b22ab6e62c59eb5c130ee6; uid_tt_ss=ff6558202655a020048bd2cfaae526dafc8bebb623b22ab6e62c59eb5c130ee6; sid_tt=9603917fd32b1e585f05e9604577af69; sessionid=9603917fd32b1e585f05e9604577af69; sessionid_ss=9603917fd32b1e585f05e9604577af69; sid_ucp_v1=1.0.0-KGU0OGQwNDI0ZTdkMDQ1M2QxZjc3NzEzY2MyNmMzYjAzZjA4MGMxNDcKGwiRiIPI0O7jy2YQ6tz9tAYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDk2MDM5MTdmZDMyYjFlNTg1ZjA1ZTk2MDQ1NzdhZjY5; ssid_ucp_v1=1.0.0-KGU0OGQwNDI0ZTdkMDQ1M2QxZjc3NzEzY2MyNmMzYjAzZjA4MGMxNDcKGwiRiIPI0O7jy2YQ6tz9tAYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDk2MDM5MTdmZDMyYjFlNTg1ZjA1ZTk2MDQ1NzdhZjY5; msToken=zVZk3hQdFN9V0JpS8l2yqraQ8LvONZTYZnXVs2TZtKka6KuONwbwMJsWu1cr-3IcASnmMHIqcTb9HUWi4mhxWspedvTR5Rsz_U1-hAf9HviA02ynl5l0FjcCafxoRi9m14d9Zb8=; csrf_session_id=038104d4e2cca436d62e10cae7a11afb; i18next=en; msToken=mR5CK1n4yrQObrBetaLEdKYL7FJ8a1jfJWtzOMqZlMH0njzEwmY_aDwA_acsdM9kBVw4eeRgMV6Jjkb-2Kc4_X3336aOmbS5i8nZ69pT5-W4VqzBTH3fkzb9bhHe-xHb74Lz9eyPkQ==',
+        'cookie': 'passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; csrf_session_id=ca5b61eff8b0af80707c95cf876e5ebc; sid_guard=c4680c7d038ea7b891919a16b7054241%7C1721818078%7C5183997%7CSun%2C+22-Sep-2024+10%3A47%3A55+GMT; uid_tt=4d158e75e120c4a9fecfd34b6e77ddb3f4fb6930e6cdca0bb7f50919d9bba0c9; uid_tt_ss=4d158e75e120c4a9fecfd34b6e77ddb3f4fb6930e6cdca0bb7f50919d9bba0c9; sid_tt=c4680c7d038ea7b891919a16b7054241; sessionid=c4680c7d038ea7b891919a16b7054241; sessionid_ss=c4680c7d038ea7b891919a16b7054241; sid_ucp_v1=1.0.0-KDU3NDAxZDIzYzg3ZWRiMDVhMjIxZDA3NjFhNTA2MWY0ZjcwNTNkMjAKGwiRiIPI0O7jy2YQ3reDtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGM0NjgwYzdkMDM4ZWE3Yjg5MTkxOWExNmI3MDU0MjQx; ssid_ucp_v1=1.0.0-KDU3NDAxZDIzYzg3ZWRiMDVhMjIxZDA3NjFhNTA2MWY0ZjcwNTNkMjAKGwiRiIPI0O7jy2YQ3reDtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGM0NjgwYzdkMDM4ZWE3Yjg5MTkxOWExNmI3MDU0MjQx; msToken=qz8ljoIVhvQNZBWZ4IQ8JKQzvqhBXep_1xFwqDKZ6TwBV8YfZSv9mZA8Lc1nEnX08wjfifrba-SM74dmNyTpFhaiiZenc-vKUwGs4l4Sx3rx8xazxkDC3VrFIJVxEvTzSaEnHfmU; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1721818079%7C46648989fb48411acb99dcc00f1a1bbdd20ed07c82d03738d6b81b536da2ad4a; odin_tt=e7b24a875551f74e8fca94d78fb654ad2e46ae2c17ca9343fdbfaf765f198be92fc334702592dc71b541f9f47ff821a5a1dbc710a90fa642502e3952d5ae613b',
         'priority': 'u=1, i',
     }
     logging.logger.info("请求url：" + url)
     try:
         response_tiktok_shop_user_unique_ids = requests.post(url=url, json=tiktok_shop_pagination, headers=headers)
-        if response_tiktok_shop_user_unique_ids.status_code != 200:
+        res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
+        if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") !=0:
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
     except Exception as ex:
         logging.logger.error(ex)
         logging.logger.error("\033[31mTikTok Shop平台获取失败，请检查网络!'\033[0m")
         # 失败计数，超过10次失败结束
         redis_client.incr(redis_key_error_num, 1)
-        return []
+        return [[], False]
     redis_client.get(redis_key_error_num).decode()
-    res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
     # 创作者Id列表
     creator_profile_list = res_data.get("creator_profile_list")
     # 分页数据
@@ -318,12 +318,13 @@ if __name__ == "__main__":
         tiktok_shop_request_enable = rsp_data[1]
         user_list.extend(rsp_data[0])
     # 固定8个线程
+    print(len(user_list))
     ranges = paginate_user_id_list(len(user_list), 3)
     result_data = []
-    thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
+    # thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
     # thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
     # thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
-    result_data.extend(thread1.result())
+    # result_data.extend(thread1.result())
     # result_data.extend(thread2.result())
     # result_data.extend(thread3.result())
     pool.shutdown()

@@ -70,7 +70,6 @@ def get_echotik_users_list(start, page):
         'x-lang': 'zh-CN',
     }
     logging.logger.info("请求url：" + url)
-    global response_echotik_users
     try:
         response_echotik_users = requests.get(url=url, headers=headers)
     except Exception as ex:
@@ -141,7 +140,6 @@ def get_tiktok_user_data(user_unique_id_list):
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
                           'Chrome/71.0.3578.98 Safari/537.36',
         }
-        global response
         try:
             response = requests.get(url=url, headers=headers)
         except Exception as ex:

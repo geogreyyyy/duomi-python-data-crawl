@@ -33,15 +33,25 @@ thread_num = 2
 # redis初始化
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
 redis_key_name = "python_data_crawl"
+# redis异常状态
 redis_key_error_num = redis_key_name + "_error_num"
 redis_key_response_num = redis_key_name + "_response_num"
 redis_key_tik_tok_request_error_num = redis_key_name + "_tik_tok_request_error_num"
+# redis请求状态
+redis_key_tiktok_shop_num = redis_key_name + "_tiktok_num"
+
+# redis状态初始化
 redis_client.set(redis_key_error_num, 0)
 redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
+redis_client.set(redis_key_tiktok_shop_num, 0)
 
 # log初始化
-logging = log.Logger("TikTok用户画像-" + str(otherStyleTime)+'.log', level='INFO')
+logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
+
+# 全局状态变量
+global tiktok_shop_request_enable
+global tiktok_shop_pagination
 
 
 # 从echotik获取用户列表
@@ -70,7 +80,6 @@ def get_echotik_users_list(start, page):
         'x-lang': 'zh-CN',
     }
     logging.logger.info("请求url：" + url)
-    global response_echotik_users
     try:
         response_echotik_users = requests.get(url=url, headers=headers)
     except Exception as ex:
@@ -86,7 +95,8 @@ def get_echotik_users_list(start, page):
     users_list = []  # 达人id
     for data in data_list:
         users_list.append(
-            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count"), data.get("total_product_cnt")])
+            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count"),
+             data.get("total_product_cnt")])
     logging.logger.debug("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
     print("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
     if len(users_list) == 0:
@@ -98,8 +108,13 @@ def get_echotik_users_list(start, page):
 
 
 # 设置用户属性
-def set_user_info(user_data, user_state, echo_tik_user_info):
+def set_user_info(user_data, user_state, create_user_info):
     user_info_array = ['0', '0', '0', '0', '0', '0', '0', '0']
+    print("------------------------------------------------------------------------------")
+    print(user_data)
+    print(user_state)
+    print(create_user_info)
+    print("------------------------------------------------------------------------------")
     if user_data is None:
         return user_info_array
     else:
@@ -111,8 +126,8 @@ def set_user_info(user_data, user_state, echo_tik_user_info):
             user_email = 'TK主页无邮箱信息'
         try:
             user_info_array = [user_data.get('id'), user_data.get('uniqueId'),
-                               user_data.get('nickname'), user_email, echo_tik_user_info[1], echo_tik_user_info[2],
-                               echo_tik_user_info[3], echo_tik_user_info[4] ]
+                               user_data.get('nickname'), user_email, "echo_tik_user_info[1]", "echo_tik_user_info[2]",
+                               "echo_tik_user_info[3]", "echo_tik_user_info[4]"]
             if user_state is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
                 user_info_array.append(user_state.get('followerCount'))
@@ -134,8 +149,9 @@ def set_user_info(user_data, user_state, echo_tik_user_info):
 def get_tiktok_user_data(user_unique_id_list):
     warit_excel_data = []
     # logging.logger.info(user_unique_id_list)
-    for uniq_id in user_unique_id_list:
-        url = 'https://www.tiktok.com/@' + str(uniq_id[0]) + '?lang=en'
+    for create_user in user_unique_id_list:
+        unique_id = create_user["handle"]["value"]
+        url = 'https://www.tiktok.com/@' + str(unique_id)
         # 请求头必须添加
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -146,7 +162,7 @@ def get_tiktok_user_data(user_unique_id_list):
             response = requests.get(url=url, headers=headers)
         except Exception as ex:
             logging.logger.error(ex)
-            logging.logger.error("\033[31m用户：" + uniq_id[0] + "TK官网无法访问，请检查网络!'\033[0m")
+            logging.logger.error("\033[31m用户：" + unique_id + "TK官网无法访问，请检查网络!'\033[0m")
             continue
         # 获取页面原始编码格式
         page_text = response.text
@@ -156,13 +172,13 @@ def get_tiktok_user_data(user_unique_id_list):
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
             print("爬取Tiktok主页中...\n")
-            print("获取TK用户" + str(uniq_id[0]) + "主页数据\n")
+            print("获取TK用户" + str(unique_id) + "主页数据\n")
             user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
             if user_info is None:
                 continue
             user_data = user_info.get("user")
             user_state = user_info.get('stats')  # 用户粉丝 点赞数  朋友数
-            warit_excel_data.append(set_user_info(user_data, user_state, uniq_id))
+            warit_excel_data.append(set_user_info(user_data, user_state, create_user))
         except Exception as ex:
             redis_client.incr(redis_key_tik_tok_request_error_num, 1)
             if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 20:
@@ -232,24 +248,84 @@ def paginate_user_id_list(total, N):
     return ranges
 
 
+# 从tiktok shop平台获取unique id列表
+def get_tiktok_shop_user_unique_id():
+    url = ("https://partner.us.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?"
+           + "user_language=en"
+           + "&partner_id=8648655559104498438"
+           + "&aid=359713&app_name=i18n_ecom_alliance"
+           + "&device_id=0&device_platform=web&cookie_enabled=true"
+           + "&screen_width=2195"
+           + "&screen_height=1235"
+           + "&browser_language=zh-CN"
+           + "&browser_platform=Win32"
+           + "&browser_name=Mozilla"
+           + "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F126.0.0.0+Safari%2F537.36"
+           + "&browser_online=true"
+           + "&timezone_name=Etc%2FGMT-8"
+           )
+    headers = {
+        'content-type': 'application/json',
+        'cookie': 'passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1721724521%7C8bf05cf21573e4b5cc0841bae2eeaa5e00ed9726a503542084d5441dac371d8a; odin_tt=b0f79cd90e6abf90cf0863a19e5d5af821e18e10201136dee92a67d7970ec8ce64cdfb12710012a623a8e2cb35047c9397f676775f27cb6568930ec81af5effa; sid_guard=9603917fd32b1e585f05e9604577af69%7C1721724522%7C5183997%7CSat%2C+21-Sep-2024+08%3A48%3A39+GMT; uid_tt=ff6558202655a020048bd2cfaae526dafc8bebb623b22ab6e62c59eb5c130ee6; uid_tt_ss=ff6558202655a020048bd2cfaae526dafc8bebb623b22ab6e62c59eb5c130ee6; sid_tt=9603917fd32b1e585f05e9604577af69; sessionid=9603917fd32b1e585f05e9604577af69; sessionid_ss=9603917fd32b1e585f05e9604577af69; sid_ucp_v1=1.0.0-KGU0OGQwNDI0ZTdkMDQ1M2QxZjc3NzEzY2MyNmMzYjAzZjA4MGMxNDcKGwiRiIPI0O7jy2YQ6tz9tAYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDk2MDM5MTdmZDMyYjFlNTg1ZjA1ZTk2MDQ1NzdhZjY5; ssid_ucp_v1=1.0.0-KGU0OGQwNDI0ZTdkMDQ1M2QxZjc3NzEzY2MyNmMzYjAzZjA4MGMxNDcKGwiRiIPI0O7jy2YQ6tz9tAYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDk2MDM5MTdmZDMyYjFlNTg1ZjA1ZTk2MDQ1NzdhZjY5; msToken=zVZk3hQdFN9V0JpS8l2yqraQ8LvONZTYZnXVs2TZtKka6KuONwbwMJsWu1cr-3IcASnmMHIqcTb9HUWi4mhxWspedvTR5Rsz_U1-hAf9HviA02ynl5l0FjcCafxoRi9m14d9Zb8=; csrf_session_id=038104d4e2cca436d62e10cae7a11afb; i18next=en; msToken=mR5CK1n4yrQObrBetaLEdKYL7FJ8a1jfJWtzOMqZlMH0njzEwmY_aDwA_acsdM9kBVw4eeRgMV6Jjkb-2Kc4_X3336aOmbS5i8nZ69pT5-W4VqzBTH3fkzb9bhHe-xHb74Lz9eyPkQ==',
+        'priority': 'u=1, i',
+    }
+    logging.logger.info("请求url：" + url)
+    try:
+        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=tiktok_shop_pagination, headers=headers)
+        if response_tiktok_shop_user_unique_ids.status_code != 200:
+            raise Exception("TikTok Shop平台获取失败，请检查网络!")
+    except Exception as ex:
+        logging.logger.error(ex)
+        logging.logger.error("\033[31mTikTok Shop平台获取失败，请检查网络!'\033[0m")
+        # 失败计数，超过10次失败结束
+        redis_client.incr(redis_key_error_num, 1)
+        return []
+    redis_client.get(redis_key_error_num).decode()
+    res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
+    # 创作者Id列表
+    creator_profile_list = res_data.get("creator_profile_list")
+    # 分页数据
+    next_pagination = res_data.get("next_pagination")
+    redis_client.incr(redis_key_tiktok_shop_num, len(creator_profile_list))  # 测试为一次12条
+    if next_pagination.get("has_more"):
+        pagination = {
+            "size": 12,
+            "page": next_pagination.get('next_page'),
+            "next_item_cursor": next_pagination.get("next_item_cursor"),
+            "search_key": next_pagination.get("search_key")
+        }
+        tiktok_shop_pagination["pagination"] = pagination
+    return [creator_profile_list, next_pagination.get("has_more")]
+
+
 if __name__ == "__main__":
+    # 初始化请求
+    tiktok_shop_request_enable = True
+    tiktok_shop_pagination = {
+        "pagination": {
+            "size": 12,
+            "page": 0
+        },
+        "algorithm": 18
+    }
     page = args.page
     # 开始计时
     t = time.time()
-    print(page)
     # 处理数据爬虫
-    user_list = start_collect_echotik_user_id(page)
-
-    ranges = paginate_user_id_list(len(user_list), 3)
-
-    result_data = []
+    user_list = []
+    while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
+        rsp_data = get_tiktok_shop_user_unique_id()
+        tiktok_shop_request_enable = rsp_data[1]
+        user_list.extend(rsp_data[0])
     # 固定8个线程
+    ranges = paginate_user_id_list(len(user_list), 3)
+    result_data = []
     thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-    thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
-    thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
+    # thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
+    # thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
     result_data.extend(thread1.result())
-    result_data.extend(thread2.result())
-    result_data.extend(thread3.result())
+    # result_data.extend(thread2.result())
+    # result_data.extend(thread3.result())
     pool.shutdown()
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")

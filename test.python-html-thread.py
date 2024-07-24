@@ -28,7 +28,7 @@ parser.add_argument('--time-range', '-tr', type=str, default=time_default_range,
 args = parser.parse_args()
 # 线程池初始化
 pool = ThreadPoolExecutor(max_workers=8)
-thread_num = 8
+thread_num = 2
 
 # redis初始化
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
@@ -64,7 +64,7 @@ def get_echotik_users_list(start, page):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/71.0.3578.98 Safari/537.36',
-        'authorization': 'Bearer 267006|bvJXZYqIlwz9YRB9lyjY7BXchtXetfU2YJUKWmFR',
+        'authorization': 'Bearer 282540|YAx0kwuPpb2TMmLsXlKDSlYY3pOyIwQyWQfXAGmX',
         'x-currency': currency,
         'x-region': region,
         'x-lang': 'zh-CN',
@@ -240,26 +240,16 @@ if __name__ == "__main__":
     # 处理数据爬虫
     user_list = start_collect_echotik_user_id(page)
 
-    ranges = paginate_user_id_list(len(user_list), thread_num)
+    ranges = paginate_user_id_list(len(user_list), 3)
+
     result_data = []
     # 固定8个线程
     thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
     thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
     thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
-    thread4 = pool.submit(get_tiktok_user_data, user_list[ranges[3][0]:ranges[3][1]])
-    thread5 = pool.submit(get_tiktok_user_data, user_list[ranges[4][0]:ranges[4][1]])
-    thread6 = pool.submit(get_tiktok_user_data, user_list[ranges[5][0]:ranges[5][1]])
-    thread7 = pool.submit(get_tiktok_user_data, user_list[ranges[6][0]:ranges[6][1]])
-    thread8 = pool.submit(get_tiktok_user_data, user_list[ranges[7][0]:ranges[7][1]])
-
     result_data.extend(thread1.result())
     result_data.extend(thread2.result())
     result_data.extend(thread3.result())
-    result_data.extend(thread4.result())
-    result_data.extend(thread5.result())
-    result_data.extend(thread6.result())
-    result_data.extend(thread7.result())
-    result_data.extend(thread8.result())
     pool.shutdown()
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")

@@ -21,14 +21,14 @@ parser.add_argument('--categories', '-cate', type=str, default="", required=Fals
 parser.add_argument('--currency', '-cur', type=str, default="", required=False, help="输入地区")
 parser.add_argument('--region', '-re', type=str, default="", required=False, help="输入地区")
 parser.add_argument('--time-type', '-tt', type=str, default="daily", required=False, help="爬取类型daily:日榜 weekly:周榜 "
-                                                                                         "monthly:月榜")
+                                                                                          "monthly:月榜")
 parser.add_argument('--time-range', '-tr', type=str, default=time_default_range, required=False, help="爬取类型daily:日榜 "
-                                                                                                     "weekly:周榜 "
-                                                                                                     "monthly:月榜")
+                                                                                                      "weekly:周榜 "
+                                                                                                      "monthly:月榜")
 args = parser.parse_args()
 # 线程池初始化
 pool = ThreadPoolExecutor(max_workers=8)
-thread_num = 8
+thread_num = 2
 
 # redis初始化
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
@@ -41,7 +41,7 @@ redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
 # log初始化
-logging = log.Logger('all.log', level='INFO')
+logging = log.Logger("TikTok用户画像-" + str(otherStyleTime)+'.log', level='INFO')
 
 
 # 从echotik获取用户列表
@@ -64,7 +64,7 @@ def get_echotik_users_list(start, page):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/71.0.3578.98 Safari/537.36',
-        'authorization': 'Bearer 267006|bvJXZYqIlwz9YRB9lyjY7BXchtXetfU2YJUKWmFR',
+        'authorization': 'Bearer 282540|YAx0kwuPpb2TMmLsXlKDSlYY3pOyIwQyWQfXAGmX',
         'x-currency': currency,
         'x-region': region,
         'x-lang': 'zh-CN',
@@ -112,7 +112,7 @@ def set_user_info(user_data, user_state, echo_tik_user_info):
         try:
             user_info_array = [user_data.get('id'), user_data.get('uniqueId'),
                                user_data.get('nickname'), user_email, echo_tik_user_info[1], echo_tik_user_info[2],
-                               echo_tik_user_info[3], echo_tik_user_info[4],]
+                               echo_tik_user_info[3], echo_tik_user_info[4] ]
             if user_state is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
                 user_info_array.append(user_state.get('followerCount'))
@@ -240,33 +240,23 @@ if __name__ == "__main__":
     # 处理数据爬虫
     user_list = start_collect_echotik_user_id(page)
 
-    ranges = paginate_user_id_list(len(user_list), thread_num)
+    ranges = paginate_user_id_list(len(user_list), 3)
+
     result_data = []
     # 固定8个线程
     thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
     thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
     thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
-    thread4 = pool.submit(get_tiktok_user_data, user_list[ranges[3][0]:ranges[3][1]])
-    thread5 = pool.submit(get_tiktok_user_data, user_list[ranges[4][0]:ranges[4][1]])
-    thread6 = pool.submit(get_tiktok_user_data, user_list[ranges[5][0]:ranges[5][1]])
-    thread7 = pool.submit(get_tiktok_user_data, user_list[ranges[6][0]:ranges[6][1]])
-    thread8 = pool.submit(get_tiktok_user_data, user_list[ranges[7][0]:ranges[7][1]])
-
     result_data.extend(thread1.result())
     result_data.extend(thread2.result())
     result_data.extend(thread3.result())
-    result_data.extend(thread4.result())
-    result_data.extend(thread5.result())
-    result_data.extend(thread6.result())
-    result_data.extend(thread7.result())
-    result_data.extend(thread8.result())
     pool.shutdown()
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")
     else:
         excel.save_data_excel(result_data,
                               "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
-                                  result_data)) + "条")
+                                  result_data)) + "条-("+args.currency+")")
 
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

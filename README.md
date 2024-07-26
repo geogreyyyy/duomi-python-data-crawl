@@ -1,5 +1,6 @@
 运行命令 
 ``python test.python-html-thread.py -p=[爬取数量,12倍数] -cur=[地区编码]D -re=[地区编码]``
+
 例如：
 ``python test.python-html-thread-bak.py -p=12 -cur=USD -re=US``
 

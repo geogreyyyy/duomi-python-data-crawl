@@ -6,8 +6,8 @@ import re
 import redis
 from concurrent.futures import ThreadPoolExecutor
 import log
-import excel
 import argparse
+import insertUtils
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -108,46 +108,80 @@ def get_echotik_users_list(start, page):
 
 
 # 设置用户属性
-def set_user_info(user_data, user_state, create_user_info):
-    user_info_array = ['0', '0', '0', '0', '0', '0', '0', '0']
-    # print("------------------------------------------------------------------------------")
-    # print(user_data)
-    # print(user_state)
-    # print(create_user_info)
-    # print("------------------------------------------------------------------------------")
+def set_user_info(user_data, user_stats, create_user_info):
+    resp_data = {}
     if user_data is None:
-        return user_info_array
+        return {}
     else:
+        resp_data_user_data = {}
+        resp_data_user_stats = {}
+        resp_data_creator_data = {}
         user_email = re.search(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
                                user_data.get('signature'), 0)
         if user_email is not None:
-            user_email = user_email.group()
-        else:
-            user_email = 'TK主页无邮箱信息'
+            resp_data_user_data["signature"] = user_email.group()
         try:
-            user_info_array = [user_data.get('id'), user_data.get('uniqueId'),
-                               user_data.get('nickname'), user_email, "echo_tik_user_info[1]", "echo_tik_user_info[2]",
-                               "echo_tik_user_info[3]", "echo_tik_user_info[4]"]
-            if user_state is not None:
+            resp_data_user_data["id"] = user_data.get('id')
+            resp_data_user_data["unique_id"] = user_data.get('uniqueId')
+            resp_data_user_data["nickname"] = user_data.get('nickname')
+            resp_data_user_data["avatar_larger"] = user_data.get('avatarLarger')
+            resp_data_user_data["avatar_medium"] = user_data.get('avatarMedium')
+            resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
+            resp_data_user_data["region"] = user_data.get('region')
+            resp_data_user_data["sec_uid"] = user_data.get('secUid')
+            resp_data_user_data["bio_link"] = user_data.get('bioLink')
+            # create_user_info
+            # print(create_user_info)
+            resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid')["value"]
+            resp_data_creator_data["user_id"] = user_data.get('id')
+            if create_user_info.get('is_authorized') is not None:
+                resp_data_creator_data["is_authorized"] = create_user_info.get('is_authorized')["value"]
+            if create_user_info.get('units_sold_range') is not None:
+                resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range')["value"]
+            if create_user_info.get('selection_region') is not None:
+                resp_data_creator_data["selection_region"] = create_user_info.get('selection_region')["value"]
+            if create_user_info.get('med_gmv_revenue_range') is not None:
+                resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range')["value"]
+            if create_user_info.get('creator_bind_mcn_name') is not None:
+                resp_data_creator_data["creator_bind_mcn_name"] = create_user_info.get('creator_bind_mcn_name')
+            if create_user_info.get('industry_groups') is not None:
+                resp_data_creator_data["industry_groups"] = create_user_info.get('industry_groups')
+            if create_user_info.get('top_follower_gender') is not None:
+                resp_data_creator_data["top_follower_gender"] = create_user_info.get('top_follower_gender')["value"]
+            if create_user_info.get('top_follower_ages') is not None:
+                resp_data_creator_data["top_follower_ages"] = create_user_info.get('top_follower_ages')["value"]
+            if create_user_info.get('follower_cnt') is not None:
+                resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt')["value"]
+            if create_user_info.get('top_follower_age') is not None:
+                resp_data_creator_data["top_follower_age"] = create_user_info.get('top_follower_age')["value"]
+            if create_user_info.get('video_avg_view_cnt') is not None:
+                resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt')["value"]
+            if user_stats is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
-                user_info_array.append(user_state.get('followerCount'))
-                user_info_array.append(user_state.get('followingCount'))
-                user_info_array.append(user_state.get('heart'))
-                user_info_array.append(user_state.get('videoCount'))
-            else:
-                user_info_array.append('0')
-                user_info_array.append('0')
-                user_info_array.append('0')
-                user_info_array.append('0')
-        except:
-            #当前账号数据权限不够
-            return user_info_array
-        return user_info_array
+                resp_data_user_stats["follower_count"] = user_stats.get('followerCount')
+                resp_data_user_stats["following_count"] = user_stats.get('followingCount')
+                resp_data_user_stats["heart"] = user_stats.get('heart')
+                resp_data_user_stats["heart_count"] = user_stats.get('heartCount')
+                resp_data_user_stats["video_count"] = user_stats.get('videoCount')
+                resp_data_user_stats["digg_count"] = user_stats.get('diggCount')
+                resp_data_user_stats["friend_count"] = user_stats.get('friendCount')
+                resp_data_user_stats["user_id"] = user_data.get('id')
+        except Exception as ex:
+            print(resp_data_creator_data)
+            logging.logger.error(ex)
+        finally:
+            resp_data["creator_user"] = resp_data_creator_data
+            resp_data["user_data"] = resp_data_user_data
+            resp_data["user_stats"] = resp_data_user_stats
+            return resp_data
 
 
 # 爬取tiktok主页
 def get_tiktok_user_data(user_unique_id_list):
-    warit_excel_data = []
+    warit_excel_data = {}
+    user_data_list = []
+    user_stats_list = []
+    creator_user_list = []
     # logging.logger.info(user_unique_id_list)
     for create_user in user_unique_id_list:
         unique_id = create_user["handle"]["value"]
@@ -177,8 +211,11 @@ def get_tiktok_user_data(user_unique_id_list):
             if user_info is None:
                 continue
             user_data = user_info.get("user")
-            user_state = user_info.get('stats')  # 用户粉丝 点赞数  朋友数
-            warit_excel_data.append(set_user_info(user_data, user_state, create_user))
+            user_state = user_info.get('stats')
+            data = set_user_info(user_data, user_state, create_user)
+            user_data_list.extend([data["user_data"]])
+            user_stats_list.extend([data["user_stats"]])
+            creator_user_list.extend([data["creator_user"]])
         except Exception as ex:
             redis_client.incr(redis_key_tik_tok_request_error_num, 1)
             if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 20:
@@ -187,6 +224,9 @@ def get_tiktok_user_data(user_unique_id_list):
             logging.logger.error(ex)
             continue
         redis_client.set(redis_key_tik_tok_request_error_num, 0)
+    warit_excel_data["user_data"] = user_data_list
+    warit_excel_data["user_stats"] = user_stats_list
+    warit_excel_data["creator_user"] = creator_user_list
     return warit_excel_data
 
 
@@ -273,7 +313,7 @@ def get_tiktok_shop_user_unique_id():
     try:
         response_tiktok_shop_user_unique_ids = requests.post(url=url, json=tiktok_shop_pagination, headers=headers)
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
-        if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") !=0:
+        if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
     except Exception as ex:
         logging.logger.error(ex)
@@ -318,22 +358,30 @@ if __name__ == "__main__":
         tiktok_shop_request_enable = rsp_data[1]
         user_list.extend(rsp_data[0])
     # 固定8个线程
-    print(len(user_list))
     ranges = paginate_user_id_list(len(user_list), 3)
-    result_data = []
-    # thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-    # thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
+    user_data_list = []
+    user_stats_list = []
+    creator_user_list = []
+    thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
+    user_data_list.extend(thread1.result()["user_data"])
+    user_stats_list.extend(thread1.result()["user_stats"])
+    creator_user_list.extend(thread1.result()["creator_user"])
+    thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
+    user_data_list.extend(thread2.result()["user_data"])
+    user_stats_list.extend(thread2.result()["user_stats"])
+    creator_user_list.extend(thread2.result()["creator_user"])
     # thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
-    # result_data.extend(thread1.result())
+
     # result_data.extend(thread2.result())
     # result_data.extend(thread3.result())
     pool.shutdown()
-    if len(result_data) == 0:
+    if len(user_data_list) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")
     else:
-        excel.save_data_excel(result_data,
-                              "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
-                                  result_data)) + "条-("+args.currency+")")
+        # excel.save_data_excel(result_data,
+        #                       "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
+        #                           result_data)) + "条-(" + args.currency + ")")
+        insertUtils.insert_user_stats(user_stats_list)
 
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

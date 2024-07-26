@@ -76,7 +76,7 @@ def save_data_excel(warit_excel_data, filename):
         sheet.write(0, index, title, header_style)
     for row in range(len(warit_excel_data)):
         for col in range(len(titles)):
-            sheet.write(row + 1, col, warit_excel_data[row][col], body_style)
+            # sheet.write(row + 1, col, warit_excel_data[row][col], body_style)
             sheet.col(col).width = 25 * 300
     # 保存Excel工作簿
     mkdir("excel")

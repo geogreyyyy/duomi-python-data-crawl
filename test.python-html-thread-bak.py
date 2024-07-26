@@ -54,59 +54,6 @@ global tiktok_shop_request_enable
 global tiktok_shop_pagination
 
 
-# 从echotik获取用户列表
-def get_echotik_users_list(start, page):
-    time_type = args.time_type  # daily:日榜 weekly:周榜 monthly:月榜
-    time_range = args.time_range  # 数据批次 20240716:日榜 20240708-20240714:周榜 20240601-20240630:月榜
-    product_categories = ""
-    influencer_categories = args.categories  # 达人分类 空：全部  Public+Figure：公众人物  Entertainment：娱乐  Beauty：颜值
-    # Personal+Blog：个人博客  Art：艺术  Music%2FDance：音乐/舞蹈  Fashion：时尚  Media：媒体  Sports：运动健身  Pets：宠物  Education：教育
-    # Baby：母婴  Food：美食
-    currency = args.currency  # USD美国 VND越南 THB泰国 MYR马来西亚 PHP菲律宾
-    region = args.region  # US美国 VN越南 TH泰国 MY马来西亚 PH菲律宾
-    url = ("https://echotik.live/api/v1/data/influencers?"
-           + "time_type=" + time_type
-           + "&time_range=" + time_range
-           + "&page=" + str(start)
-           + "&product_categories=" + product_categories
-           + "&influencer_categories=" + influencer_categories
-           + "&per_page=" + str(page))
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/71.0.3578.98 Safari/537.36',
-        'authorization': 'Bearer 282540|YAx0kwuPpb2TMmLsXlKDSlYY3pOyIwQyWQfXAGmX',
-        'x-currency': currency,
-        'x-region': region,
-        'x-lang': 'zh-CN',
-    }
-    logging.logger.info("请求url：" + url)
-    try:
-        response_echotik_users = requests.get(url=url, headers=headers)
-    except Exception as ex:
-        logging.logger.error(ex)
-        logging.logger.error("\033[31mEchotik官网获取数据失败，请检查网络!'\033[0m")
-        # 失败计数，超过10次失败结束
-        redis_client.incr(redis_key_error_num, 1)
-        return []
-    redis_client.get(redis_key_error_num).decode()
-    res_data = json.loads(response_echotik_users.text)
-    data_list = res_data.get("data")
-    # logging.logger.info(data_list)
-    users_list = []  # 达人id
-    for data in data_list:
-        users_list.append(
-            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count"),
-             data.get("total_product_cnt")])
-    logging.logger.debug("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
-    print("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
-    if len(users_list) == 0:
-        # 0条数据超过10次，代表没有数据
-        redis_client.incr(redis_key_response_num, 1)
-    else:
-        redis_client.get(redis_key_response_num).decode()
-    return users_list
-
-
 # 设置用户属性
 def set_user_info(user_data, user_stats, create_user_info):
     resp_data = {}
@@ -120,6 +67,8 @@ def set_user_info(user_data, user_stats, create_user_info):
                                user_data.get('signature'), 0)
         if user_email is not None:
             resp_data_user_data["signature"] = user_email.group()
+        else:
+            resp_data_user_data["signature"] = ""
         try:
             resp_data_user_data["id"] = user_data.get('id')
             resp_data_user_data["unique_id"] = user_data.get('uniqueId')
@@ -131,11 +80,11 @@ def set_user_info(user_data, user_stats, create_user_info):
             resp_data_user_data["sec_uid"] = user_data.get('secUid')
             resp_data_user_data["bio_link"] = user_data.get('bioLink')
             # create_user_info
-            # print(create_user_info)
             resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid')["value"]
             resp_data_creator_data["user_id"] = user_data.get('id')
+            resp_data_creator_data["handle"] = create_user_info.get('handle')["value"]
             if create_user_info.get('is_authorized') is not None:
-                resp_data_creator_data["is_authorized"] = create_user_info.get('is_authorized')["value"]
+                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized')["value"] else 2
             if create_user_info.get('units_sold_range') is not None:
                 resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range')["value"]
             if create_user_info.get('selection_region') is not None:
@@ -149,7 +98,7 @@ def set_user_info(user_data, user_stats, create_user_info):
             if create_user_info.get('top_follower_gender') is not None:
                 resp_data_creator_data["top_follower_gender"] = create_user_info.get('top_follower_gender')["value"]
             if create_user_info.get('top_follower_ages') is not None:
-                resp_data_creator_data["top_follower_ages"] = create_user_info.get('top_follower_ages')["value"]
+                resp_data_creator_data["top_follower_ages"] = ",".join(create_user_info.get('top_follower_ages')["value"])
             if create_user_info.get('follower_cnt') is not None:
                 resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt')["value"]
             if create_user_info.get('top_follower_age') is not None:
@@ -167,7 +116,6 @@ def set_user_info(user_data, user_stats, create_user_info):
                 resp_data_user_stats["friend_count"] = user_stats.get('friendCount')
                 resp_data_user_stats["user_id"] = user_data.get('id')
         except Exception as ex:
-            print(resp_data_creator_data)
             logging.logger.error(ex)
         finally:
             resp_data["creator_user"] = resp_data_creator_data
@@ -205,7 +153,6 @@ def get_tiktok_user_data(user_unique_id_list):
         try:
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
-            print("爬取Tiktok主页中...\n")
             print("获取TK用户" + str(unique_id) + "主页数据\n")
             user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
             if user_info is None:
@@ -240,34 +187,6 @@ def paginate(total_pages, pages_per_range):
     if len(ranges) * 50 < int(total_pages):
         ranges.append([str(len(ranges) + 1), '50'])
     return ranges
-
-
-# 开始爬取echotik网站
-def start_collect_echotik_user_id(page):
-    ranges = paginate(page, 50)
-    ls_data = []
-    for page_data in ranges:
-        echotik_user_data = get_echotik_users_list(page_data[0], page_data[1])
-
-        while len(echotik_user_data) == 0:
-            echotik_user_data = get_echotik_users_list(page_data[0], page_data[1])
-            if int(redis_client.get(redis_key_response_num)) >= 10:
-                logging.logger.info("\033[31m EchoTik网站用户列表已全部爬取完成'\033[0m")
-                break
-            if int(redis_client.get(redis_key_error_num)) >= 10:
-                logging.logger.error("\033[31m EchoTik网站连接失败，请检查网络'\033[0m")
-                break
-        if int(redis_client.get(redis_key_response_num)) >= 10:
-            logging.logger.info("\033[31m EchoTik网站用户列表已全部爬取完成'\033[0m")
-            break
-        ls_data.extend(echotik_user_data)
-
-    unique_users_list = list(set([tuple(t) for t in ls_data]))
-    same_user_num = len(ls_data) - len(unique_users_list)
-    logging.logger.info(
-        "获取用户列表完成，总共获得" + str(len(ls_data)) + "条数据,其中重复:" + str(same_user_num) + "条，去重共" + str(
-            len(unique_users_list)) + "条.\n")
-    return unique_users_list
 
 
 # 分割用户id列表给多线程
@@ -306,7 +225,7 @@ def get_tiktok_shop_user_unique_id():
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': 'passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; csrf_session_id=ca5b61eff8b0af80707c95cf876e5ebc; sid_guard=c4680c7d038ea7b891919a16b7054241%7C1721818078%7C5183997%7CSun%2C+22-Sep-2024+10%3A47%3A55+GMT; uid_tt=4d158e75e120c4a9fecfd34b6e77ddb3f4fb6930e6cdca0bb7f50919d9bba0c9; uid_tt_ss=4d158e75e120c4a9fecfd34b6e77ddb3f4fb6930e6cdca0bb7f50919d9bba0c9; sid_tt=c4680c7d038ea7b891919a16b7054241; sessionid=c4680c7d038ea7b891919a16b7054241; sessionid_ss=c4680c7d038ea7b891919a16b7054241; sid_ucp_v1=1.0.0-KDU3NDAxZDIzYzg3ZWRiMDVhMjIxZDA3NjFhNTA2MWY0ZjcwNTNkMjAKGwiRiIPI0O7jy2YQ3reDtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGM0NjgwYzdkMDM4ZWE3Yjg5MTkxOWExNmI3MDU0MjQx; ssid_ucp_v1=1.0.0-KDU3NDAxZDIzYzg3ZWRiMDVhMjIxZDA3NjFhNTA2MWY0ZjcwNTNkMjAKGwiRiIPI0O7jy2YQ3reDtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGM0NjgwYzdkMDM4ZWE3Yjg5MTkxOWExNmI3MDU0MjQx; msToken=qz8ljoIVhvQNZBWZ4IQ8JKQzvqhBXep_1xFwqDKZ6TwBV8YfZSv9mZA8Lc1nEnX08wjfifrba-SM74dmNyTpFhaiiZenc-vKUwGs4l4Sx3rx8xazxkDC3VrFIJVxEvTzSaEnHfmU; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1721818079%7C46648989fb48411acb99dcc00f1a1bbdd20ed07c82d03738d6b81b536da2ad4a; odin_tt=e7b24a875551f74e8fca94d78fb654ad2e46ae2c17ca9343fdbfaf765f198be92fc334702592dc71b541f9f47ff821a5a1dbc710a90fa642502e3952d5ae613b',
+        'cookie': "passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; csrf_session_id=ca5b61eff8b0af80707c95cf876e5ebc; shop_tiktok_lang=en; msToken=kAX3rEncCGYSowgOyR66LVC8ZQYPk_cvlQWI4u4l4HGmzE48Wf6F-LwSks9ekeThN4kGp_CUkUeQHhz08eLWcq4I1l-ZdLLjwb6iZq21kjeTlHo4hUUKMnPAvHX7aStgNR4QV0NDDQ==; _ga_BZBQ2QHQSP=GS1.1.1721987355.1.0.1721987355.0.0.0; _ga=GA1.1.598775795.1721987355; _fbp=fb.1.1721987355283.707109687568995495; _tt_enable_cookie=1; _ttp=r0MDjfAUEIGnxr3PhAbIsX8Pk2s; sid_guard=31636608f9291e0ba23d638a00485f04%7C1721987390%7C5183998%7CTue%2C+24-Sep-2024+09%3A49%3A48+GMT; uid_tt=b13d929cc8d1850bd6c5a39ee78ad3b0a25556c5f9f188c98f98deb9907e1015; uid_tt_ss=b13d929cc8d1850bd6c5a39ee78ad3b0a25556c5f9f188c98f98deb9907e1015; sid_tt=31636608f9291e0ba23d638a00485f04; sessionid=31636608f9291e0ba23d638a00485f04; sessionid_ss=31636608f9291e0ba23d638a00485f04; sid_ucp_v1=1.0.0-KDE5NmM0Mzk3OGQ1OTc0ZDNjNmY4MDZlMzc4MzU4ZWY3ZjQ0YmFhYjMKGwiRiIPI0O7jy2YQvuKNtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDMxNjM2NjA4ZjkyOTFlMGJhMjNkNjM4YTAwNDg1ZjA0; ssid_ucp_v1=1.0.0-KDE5NmM0Mzk3OGQ1OTc0ZDNjNmY4MDZlMzc4MzU4ZWY3ZjQ0YmFhYjMKGwiRiIPI0O7jy2YQvuKNtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDMxNjM2NjA4ZjkyOTFlMGJhMjNkNjM4YTAwNDg1ZjA0; msToken=3omLiou1AmfbIROjHaR_izADrwZ87DBvJxnutbc9cC4bbuOKMsyX69DNbo9WQiFCe3l7qR0b9jG_kteSu6KLvHB3QaxYgLGzdtWzCuj-1tI-aZCITw-mqvDY62owuCxA95HbOjLI; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1721987391%7C281c598c8dd820e0d6da2774b5d28d22ac7ec73f98de362eb25e57901a610e03; i18next=en; odin_tt=a09235cfb7319aa80c882f8d0eb7470e16aab745fbba928f8d1fab090f893f2542469be3e0855db7766c7f5bf43b4fa13e4e540b5e1c6a0f261246e6aa4b3d4b",
         'priority': 'u=1, i',
     }
     logging.logger.info("请求url：" + url)
@@ -358,7 +277,7 @@ if __name__ == "__main__":
         tiktok_shop_request_enable = rsp_data[1]
         user_list.extend(rsp_data[0])
     # 固定8个线程
-    ranges = paginate_user_id_list(len(user_list), 3)
+    ranges = paginate_user_id_list(len(user_list), 2)
     user_data_list = []
     user_stats_list = []
     creator_user_list = []
@@ -382,6 +301,8 @@ if __name__ == "__main__":
         #                       "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
         #                           result_data)) + "条-(" + args.currency + ")")
         insertUtils.insert_user_stats(user_stats_list)
+        insertUtils.insert_user_info(user_data_list)
+        insertUtils.insert_creator_user(creator_user_list)
 
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

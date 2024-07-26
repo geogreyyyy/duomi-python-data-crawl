@@ -110,7 +110,6 @@ class Mysql(object):
         @param values:要插入的记录数据tuple(tuple)/list[list]
         @return: count 受影响的行数
         """
-        print(sql)
         count = self._cursor.executemany(sql, values)
         return count
 

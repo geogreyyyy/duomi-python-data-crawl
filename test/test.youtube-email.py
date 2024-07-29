@@ -53,7 +53,7 @@ try:
     driver.find_element('xpath', '//*[@id="identifierId"]').send_keys('cick-y@foxmail.com')
     driver.find_element('xpath', '//*[@id="identifierNext"]/div/button').click()
     time.sleep(10)
-    driver.find_element('xpath', '//*[@id="password"]/div[1]/div/div[1]/input').send_keys('11111')
+    driver.find_element('xpath', '//*[@id="password"]/div[1]/div/div[1]/input').send_keys('13065162873yjz')
     driver.find_element('xpath', '//*[@id="passwordNext"]/div/button').click()
     time.sleep(5)
     email = get_email(url)

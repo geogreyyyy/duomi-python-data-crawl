@@ -70,6 +70,7 @@ def set_user_info(user_data, user_stats, create_user_info):
         else:
             resp_data_user_data["signature"] = ""
         try:
+            resp_data_user_stats["user_id"] = user_data.get('id')
             resp_data_user_data["id"] = user_data.get('id')
             resp_data_user_data["unique_id"] = user_data.get('uniqueId')
             resp_data_user_data["nickname"] = user_data.get('nickname')
@@ -84,7 +85,7 @@ def set_user_info(user_data, user_stats, create_user_info):
             resp_data_creator_data["user_id"] = user_data.get('id')
             resp_data_creator_data["handle"] = create_user_info.get('handle')["value"]
             if create_user_info.get('is_authorized') is not None:
-                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized')["value"] else 2
+                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized') else 2
             if create_user_info.get('units_sold_range') is not None:
                 resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range')["value"]
             if create_user_info.get('selection_region') is not None:
@@ -93,16 +94,16 @@ def set_user_info(user_data, user_stats, create_user_info):
                 resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range')["value"]
             if create_user_info.get('creator_bind_mcn_name') is not None:
                 resp_data_creator_data["creator_bind_mcn_name"] = create_user_info.get('creator_bind_mcn_name')
-            if create_user_info.get('industry_groups') is not None:
-                resp_data_creator_data["industry_groups"] = create_user_info.get('industry_groups')
+            if create_user_info.get('category') is not None:
+                resp_data_creator_data["industry_groups"] = create_user_info.get('category')
             if create_user_info.get('top_follower_gender') is not None:
-                resp_data_creator_data["top_follower_gender"] = create_user_info.get('top_follower_gender')["value"]
+                resp_data_creator_data["top_follower_gender"] = create_user_info.get('top_follower_gender')
             if create_user_info.get('top_follower_ages') is not None:
-                resp_data_creator_data["top_follower_ages"] = ",".join(create_user_info.get('top_follower_ages')["value"])
+                resp_data_creator_data["top_follower_ages"] = ",".join(create_user_info.get('top_follower_ages'))
             if create_user_info.get('follower_cnt') is not None:
                 resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt')["value"]
             if create_user_info.get('top_follower_age') is not None:
-                resp_data_creator_data["top_follower_age"] = create_user_info.get('top_follower_age')["value"]
+                resp_data_creator_data["top_follower_age"] = create_user_info.get('top_follower_age')
             if create_user_info.get('video_avg_view_cnt') is not None:
                 resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt')["value"]
             if user_stats is not None:
@@ -114,7 +115,7 @@ def set_user_info(user_data, user_stats, create_user_info):
                 resp_data_user_stats["video_count"] = user_stats.get('videoCount')
                 resp_data_user_stats["digg_count"] = user_stats.get('diggCount')
                 resp_data_user_stats["friend_count"] = user_stats.get('friendCount')
-                resp_data_user_stats["user_id"] = user_data.get('id')
+
         except Exception as ex:
             logging.logger.error(ex)
         finally:
@@ -127,12 +128,11 @@ def set_user_info(user_data, user_stats, create_user_info):
 # 爬取tiktok主页
 def get_tiktok_user_data(user_unique_id_list):
     warit_excel_data = {}
-    user_data_list = []
-    user_stats_list = []
-    creator_user_list = []
     # logging.logger.info(user_unique_id_list)
     for create_user in user_unique_id_list:
         unique_id = create_user["handle"]["value"]
+        if redis_client.get("tiktok_user_info:"+unique_id) is not None:
+            continue
         url = 'https://www.tiktok.com/@' + str(unique_id)
         # 请求头必须添加
         headers = {
@@ -160,9 +160,10 @@ def get_tiktok_user_data(user_unique_id_list):
             user_data = user_info.get("user")
             user_state = user_info.get('stats')
             data = set_user_info(user_data, user_state, create_user)
-            user_data_list.extend([data["user_data"]])
-            user_stats_list.extend([data["user_stats"]])
-            creator_user_list.extend([data["creator_user"]])
+            warit_excel_data[unique_id] = {}
+            warit_excel_data[unique_id]["creator_user"] = data["creator_user"]
+            warit_excel_data[unique_id]["user_data"] = data["user_data"]
+            warit_excel_data[unique_id]["user_stats"] = data["user_stats"]
         except Exception as ex:
             redis_client.incr(redis_key_tik_tok_request_error_num, 1)
             if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 20:
@@ -171,9 +172,6 @@ def get_tiktok_user_data(user_unique_id_list):
             logging.logger.error(ex)
             continue
         redis_client.set(redis_key_tik_tok_request_error_num, 0)
-    warit_excel_data["user_data"] = user_data_list
-    warit_excel_data["user_stats"] = user_stats_list
-    warit_excel_data["creator_user"] = creator_user_list
     return warit_excel_data
 
 
@@ -209,24 +207,29 @@ def paginate_user_id_list(total, N):
 
 # 从tiktok shop平台获取unique id列表
 def get_tiktok_shop_user_unique_id():
-    url = ("https://partner.us.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?"
-           + "user_language=en"
-           + "&partner_id=8648655559104498438"
-           + "&aid=359713&app_name=i18n_ecom_alliance"
-           + "&device_id=0&device_platform=web&cookie_enabled=true"
-           + "&screen_width=2195"
-           + "&screen_height=1235"
-           + "&browser_language=zh-CN"
-           + "&browser_platform=Win32"
-           + "&browser_name=Mozilla"
-           + "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F126.0.0.0+Safari%2F537.36"
-           + "&browser_online=true"
-           + "&timezone_name=Etc%2FGMT-8"
+    url = ("https://affiliate-us.tiktok.com/api/v1/oec/affiliate/creator/marketplace/find?"
+           "user_language=en"
+           "&aid=4331"
+           "&app_name=i18n_ecom_alliance"
+           "&device_id=0"
+           "&fp=verify_lyznqsz1_lfJCqLd2_2ujl_4eOy_BJHr_BV54Cjh6pMVr"
+           "&device_platform=web"
+           "&cookie_enabled=true"
+           "&screen_width=2195"
+           "&screen_height=1235"
+           "&browser_language=zh-CN"
+           "&browser_platform=Win32"
+           "&browser_name=Mozilla"
+           "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F126.0.0.0+Safari%2F537.36"
+           "&browser_online=true"
+           "&timezone_name=Etc%2FGMT-8"
+           "&oec_seller_id=7495279362416609893"
+           "&shop_region=US"
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': "passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; csrf_session_id=ca5b61eff8b0af80707c95cf876e5ebc; shop_tiktok_lang=en; msToken=kAX3rEncCGYSowgOyR66LVC8ZQYPk_cvlQWI4u4l4HGmzE48Wf6F-LwSks9ekeThN4kGp_CUkUeQHhz08eLWcq4I1l-ZdLLjwb6iZq21kjeTlHo4hUUKMnPAvHX7aStgNR4QV0NDDQ==; _ga_BZBQ2QHQSP=GS1.1.1721987355.1.0.1721987355.0.0.0; _ga=GA1.1.598775795.1721987355; _fbp=fb.1.1721987355283.707109687568995495; _tt_enable_cookie=1; _ttp=r0MDjfAUEIGnxr3PhAbIsX8Pk2s; sid_guard=31636608f9291e0ba23d638a00485f04%7C1721987390%7C5183998%7CTue%2C+24-Sep-2024+09%3A49%3A48+GMT; uid_tt=b13d929cc8d1850bd6c5a39ee78ad3b0a25556c5f9f188c98f98deb9907e1015; uid_tt_ss=b13d929cc8d1850bd6c5a39ee78ad3b0a25556c5f9f188c98f98deb9907e1015; sid_tt=31636608f9291e0ba23d638a00485f04; sessionid=31636608f9291e0ba23d638a00485f04; sessionid_ss=31636608f9291e0ba23d638a00485f04; sid_ucp_v1=1.0.0-KDE5NmM0Mzk3OGQ1OTc0ZDNjNmY4MDZlMzc4MzU4ZWY3ZjQ0YmFhYjMKGwiRiIPI0O7jy2YQvuKNtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDMxNjM2NjA4ZjkyOTFlMGJhMjNkNjM4YTAwNDg1ZjA0; ssid_ucp_v1=1.0.0-KDE5NmM0Mzk3OGQ1OTc0ZDNjNmY4MDZlMzc4MzU4ZWY3ZjQ0YmFhYjMKGwiRiIPI0O7jy2YQvuKNtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDMxNjM2NjA4ZjkyOTFlMGJhMjNkNjM4YTAwNDg1ZjA0; msToken=3omLiou1AmfbIROjHaR_izADrwZ87DBvJxnutbc9cC4bbuOKMsyX69DNbo9WQiFCe3l7qR0b9jG_kteSu6KLvHB3QaxYgLGzdtWzCuj-1tI-aZCITw-mqvDY62owuCxA95HbOjLI; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1721987391%7C281c598c8dd820e0d6da2774b5d28d22ac7ec73f98de362eb25e57901a610e03; i18next=en; odin_tt=a09235cfb7319aa80c882f8d0eb7470e16aab745fbba928f8d1fab090f893f2542469be3e0855db7766c7f5bf43b4fa13e4e540b5e1c6a0f261246e6aa4b3d4b",
-        'priority': 'u=1, i',
+        'Cookie': "tt_chain_token=G4b1XFlsj2CRSfsarq78Sw==; passport_csrf_token=79c0238d91a14e415c99f41e911ea1c1; passport_csrf_token_default=79c0238d91a14e415c99f41e911ea1c1; _m4b_theme_=new; _ga=GA1.1.2119822309.1721724000; _ttp=2jdjlkdhuiqpZbdLT0ZDriIsIii; _fbp=fb.1.1721724001066.849388382549850786; passport_auth_status_ads=c970ac1b00b939dd013b8e16b5efea25%2C; passport_auth_status_ss_ads=c970ac1b00b939dd013b8e16b5efea25%2C; tt_csrf_token=tWXKEOUx-OyZkmPsq1SEenXC5YQZbxj3pdmw; s_v_web_id=verify_lyznqsz1_lfJCqLd2_2ujl_4eOy_BJHr_BV54Cjh6pMVr; sid_guard_ads=5a594394e1d6cf3b277dc31890fb4d2e%7C1721978189%7C5183999%7CTue%2C+24-Sep-2024+07%3A16%3A28+GMT; uid_tt_ads=9dddf659e029146d70876c9afa2bbc022937bac09ae925b2d112326c8bc0d72d; uid_tt_ss_ads=9dddf659e029146d70876c9afa2bbc022937bac09ae925b2d112326c8bc0d72d; sid_tt_ads=5a594394e1d6cf3b277dc31890fb4d2e; sessionid_ads=5a594394e1d6cf3b277dc31890fb4d2e; sessionid_ss_ads=5a594394e1d6cf3b277dc31890fb4d2e; ttwid=1%7C7PuXBYZ-PXnxeqQL22ylNS3i61w4rPxPXFVYAqKt91c%7C1722221606%7C4ce914feb52611bea4ba85e790ea12abf632ae1afe3bcdbd67b113f916bc6a84; _uetsid=c5112d004d5511ef86616f939ab30f0a; _uetvid=2658938048cf11ef9cf767b0782f7319; d_ticket_ads=2e9619e21b4615b7bf84fddf041362170f90b; sso_auth_status_ads=ffd6ff4f39adb261e6876a4358c7cbb6%2Caeb76bd77d681974d8c81db7e571d0c9; sso_auth_status_ss_ads=ffd6ff4f39adb261e6876a4358c7cbb6%2Caeb76bd77d681974d8c81db7e571d0c9; sso_uid_tt_ads=a084c6dd43a7b50ddc90ed8219d28f96d17b83b0a169fa2c693c9b1d340c5c45; sso_uid_tt_ss_ads=a084c6dd43a7b50ddc90ed8219d28f96d17b83b0a169fa2c693c9b1d340c5c45; sso_user_ads=f8de99290bcd2676c994633fd4413d02; sso_user_ss_ads=f8de99290bcd2676c994633fd4413d02; sid_ucp_sso_v1_ads=1.0.0-KDAwY2QxNzk1M2RkM2EwNmNiNjVlZTYwMjgyMzk4Mzk0NTAyMjlhYTAKIAiGiKCu1sy5-WQQzouctQYY5B8gDDCBzcunBjgBQOsHEAMaA3NnMSIgZjhkZTk5MjkwYmNkMjY3NmM5OTQ2MzNmZDQ0MTNkMDI; ssid_ucp_sso_v1_ads=1.0.0-KDAwY2QxNzk1M2RkM2EwNmNiNjVlZTYwMjgyMzk4Mzk0NTAyMjlhYTAKIAiGiKCu1sy5-WQQzouctQYY5B8gDDCBzcunBjgBQOsHEAMaA3NnMSIgZjhkZTk5MjkwYmNkMjY3NmM5OTQ2MzNmZDQ0MTNkMDI; sid_guard_tiktokseller=614b81eb8fafe34e6739faa3dc0da78e%7C1722222031%7C863999%7CThu%2C+08-Aug-2024+03%3A00%3A30+GMT; uid_tt_tiktokseller=92011a3f319704069c4998e13444a636f164791e5b9113acb298798d9e3b2905; uid_tt_ss_tiktokseller=92011a3f319704069c4998e13444a636f164791e5b9113acb298798d9e3b2905; sid_tt_tiktokseller=614b81eb8fafe34e6739faa3dc0da78e; sessionid_tiktokseller=614b81eb8fafe34e6739faa3dc0da78e; sessionid_ss_tiktokseller=614b81eb8fafe34e6739faa3dc0da78e; sid_ucp_v1_tiktokseller=1.0.0-KDg5ZjI2ZWM4NjRmM2I4ZWNhZjg5ZTkyM2UyMWYyNGIwNzM5NTcyNTEKGgiGiKCu1sy5-WQQz4uctQYY5B8gDDgBQOsHEAMaA3NnMSIgNjE0YjgxZWI4ZmFmZTM0ZTY3MzlmYWEzZGMwZGE3OGU; ssid_ucp_v1_tiktokseller=1.0.0-KDg5ZjI2ZWM4NjRmM2I4ZWNhZjg5ZTkyM2UyMWYyNGIwNzM5NTcyNTEKGgiGiKCu1sy5-WQQz4uctQYY5B8gDDgBQOsHEAMaA3NnMSIgNjE0YjgxZWI4ZmFmZTM0ZTY3MzlmYWEzZGMwZGE3OGU; msToken=pdZQskIm5SX5e-gPkal_9bl1VNWKEN1wn7LJIBjlzDZcdQufJ1Tl29XkgHD2ISm8gzv7jNX8FRW9jlreqTiXxGS6WNDaUvZ-C7PdmjR1NiRgYIa-f9k-Mu1MnbXUyTAlMdzSMpiDt9dNEPz3MAg=; _ga_BZBQ2QHQSP=GS1.1.1722221627.3.1.1722222031.0.0.0; odin_tt=0de2eeaf04476421e9ccc09f5451edea0dc8dfe72f539b80a1a153aabef4e2af2788ab220e8b6204837072a4438821ab66badd754e533b713b0b98bb9222bac8; user_oec_info=0a53172b1e28cbb23daa84a876a6d78ecd903ef3a21208c7a0d8d99f4be2180e02547a0e6b9f9b2a0a80596d4cde7de793f9e3eb4760b42a5fc8dd6d28d4eedf81b57c4bd5ef81075815627072d8861eecb4c0d1a01a490a3c22fb8d4bad8c0e9eb1c6319648da92da3da2138e07e0b76334931f4d336c2506dc76d9b218247e592f4c55312aa88754a7abb001fa37dba904fb634310fcf4d70d1886d2f6f20d220104eeeb08bd; i18next=en",
+        'Priority': 'u=1, i',
     }
     logging.logger.info("请求url：" + url)
     try:
@@ -265,44 +268,36 @@ if __name__ == "__main__":
             "size": 12,
             "page": 0
         },
-        "algorithm": 18
+        "algorithm": 1
     }
     page = args.page
     # 开始计时
     t = time.time()
     # 处理数据爬虫
     user_list = []
-    while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
-        rsp_data = get_tiktok_shop_user_unique_id()
-        tiktok_shop_request_enable = rsp_data[1]
-        user_list.extend(rsp_data[0])
+    aa = redis_client.get("data")
+    if aa is not None:
+        user_list = json.loads(aa)
+    else:
+        while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
+            rsp_data = get_tiktok_shop_user_unique_id()
+            tiktok_shop_request_enable = rsp_data[1]
+            user_list.extend(rsp_data[0])
+        redis_client.set("data", json.dumps(user_list))
     # 固定8个线程
+    print(tiktok_shop_pagination)
     ranges = paginate_user_id_list(len(user_list), 2)
     user_data_list = []
     user_stats_list = []
     creator_user_list = []
     thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-    user_data_list.extend(thread1.result()["user_data"])
-    user_stats_list.extend(thread1.result()["user_stats"])
-    creator_user_list.extend(thread1.result()["creator_user"])
+    insertUtils.insert_data(thread1.result(), user_list[ranges[0][0]:ranges[0][1]])
     thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
-    user_data_list.extend(thread2.result()["user_data"])
-    user_stats_list.extend(thread2.result()["user_stats"])
-    creator_user_list.extend(thread2.result()["creator_user"])
+    insertUtils.insert_data(thread2.result(), user_list[ranges[1][0]:ranges[1][1]])
     # thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
 
     # result_data.extend(thread2.result())
     # result_data.extend(thread3.result())
     pool.shutdown()
-    if len(user_data_list) == 0:
-        logging.logger.error("爬取数据为空！不存储Excel")
-    else:
-        # excel.save_data_excel(result_data,
-        #                       "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
-        #                           result_data)) + "条-(" + args.currency + ")")
-        insertUtils.insert_user_stats(user_stats_list)
-        insertUtils.insert_user_info(user_data_list)
-        insertUtils.insert_creator_user(creator_user_list)
-
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

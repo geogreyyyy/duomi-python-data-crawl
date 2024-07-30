@@ -85,6 +85,7 @@ def insert_creator_user(data, redis_stats_id):
         return
     mysql.dispose()
 
+
 def insert_data(data, unique_id_list):
     if len(data) == 0:
         return
@@ -98,4 +99,6 @@ def insert_data(data, unique_id_list):
                 insert_creator_user(data[handle], False)
             redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
         except Exception as ex:
+            logging.logger.error(handle+"出错!")
             logging.logger.error(ex)
+

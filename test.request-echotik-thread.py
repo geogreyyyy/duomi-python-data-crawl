@@ -36,12 +36,14 @@ redis_key_name = "python_data_crawl"
 redis_key_error_num = redis_key_name + "_error_num"
 redis_key_response_num = redis_key_name + "_response_num"
 redis_key_tik_tok_request_error_num = redis_key_name + "_tik_tok_request_error_num"
+redis_key_tik_tok_request_wait_num = redis_key_name + "_tik_tok_request_wait_num"
 redis_client.set(redis_key_error_num, 0)
 redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
+redis_client.set(redis_key_tik_tok_request_wait_num, 0)
 
 # log初始化
-logging = log.Logger("TikTok用户画像-" + str(otherStyleTime)+'.log', level='INFO')
+logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
 
 
 # 从echotik获取用户列表
@@ -85,7 +87,8 @@ def get_echotik_users_list(start, page):
     users_list = []  # 达人id
     for data in data_list:
         users_list.append(
-            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count"), data.get("total_product_cnt")])
+            [data.get("unique_id"), data.get("category"), data.get("category_product"), data.get("follower_30d_count"),
+             data.get("total_product_cnt")])
     logging.logger.debug("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
     print("爬取Echotik达人列表,本次数据" + str(len(users_list)) + "条...\n")
     if len(users_list) == 0:
@@ -111,7 +114,7 @@ def set_user_info(user_data, user_state, echo_tik_user_info):
         try:
             user_info_array = [user_data.get('id'), user_data.get('uniqueId'),
                                user_data.get('nickname'), user_email, echo_tik_user_info[1], echo_tik_user_info[2],
-                               echo_tik_user_info[3], echo_tik_user_info[4] ]
+                               echo_tik_user_info[3], echo_tik_user_info[4]]
             if user_state is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
                 user_info_array.append(user_state.get('followerCount'))
@@ -124,7 +127,7 @@ def set_user_info(user_data, user_state, echo_tik_user_info):
                 user_info_array.append('0')
                 user_info_array.append('0')
         except:
-            #当前账号数据权限不够
+            # 当前账号数据权限不够
             return user_info_array
         return user_info_array
 
@@ -134,6 +137,10 @@ def get_tiktok_user_data(user_unique_id_list):
     warit_excel_data = []
     # logging.logger.info(user_unique_id_list)
     for uniq_id in user_unique_id_list:
+        if int(redis_client.get(redis_key_tik_tok_request_wait_num)) > 40:
+            time.sleep(10)
+            redis_client.set(redis_key_tik_tok_request_wait_num, 0)
+            logging.logger.info("反爬措施，停10秒......")
         url = 'https://www.tiktok.com/@' + str(uniq_id[0]) + '?lang=en'
         # 请求头必须添加
         headers = {
@@ -153,7 +160,6 @@ def get_tiktok_user_data(user_unique_id_list):
         try:
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
-            print("爬取Tiktok主页中...\n")
             print("获取TK用户" + str(uniq_id[0]) + "主页数据\n")
             user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
             if user_info is None:
@@ -169,6 +175,7 @@ def get_tiktok_user_data(user_unique_id_list):
             logging.logger.error(ex)
             continue
         redis_client.set(redis_key_tik_tok_request_error_num, 0)
+        redis_client.incr(redis_key_tik_tok_request_wait_num, 1)
     return warit_excel_data
 
 
@@ -236,25 +243,25 @@ if __name__ == "__main__":
     t = time.time()
     print(page)
     # 处理数据爬虫
-    user_list = start_collect_echotik_user_id(page)
-
-    ranges = paginate_user_id_list(len(user_list), 3)
+    aa = redis_client.get("test-unused-EchoTik-user")
+    if aa is not None:
+        user_list = json.loads(aa)
+    else:
+        user_list = start_collect_echotik_user_id(page)
+        redis_client.set("test-unused-EchoTik-user", json.dumps(user_list))
+    ranges = paginate_user_id_list(len(user_list), 2)
 
     result_data = []
     # 固定8个线程
-    thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-    thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
-    thread3 = pool.submit(get_tiktok_user_data, user_list[ranges[2][0]:ranges[2][1]])
+    thread1 = pool.submit(get_tiktok_user_data, user_list)
     result_data.extend(thread1.result())
-    result_data.extend(thread2.result())
-    result_data.extend(thread3.result())
     pool.shutdown()
     if len(result_data) == 0:
         logging.logger.error("爬取数据为空！不存储Excel")
     else:
         excel.save_data_excel(result_data,
                               "TikTok用户画像-" + str(otherStyleTime) + "-" + str(numStyleTime) + "-" + str(len(
-                                  result_data)) + "条-("+args.currency+")")
+                                  result_data)) + "条-(" + args.currency + ")")
 
     logging.logger.info("爬取数据完成.")
     logging.logger.info(f'耗时:{time.time() - t:.4f}s')

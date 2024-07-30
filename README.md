@@ -4,7 +4,7 @@
 例如：
 ``python test.python-html-thread-bak.py -p=12 -cur=USD -re=US``
 
-数据配置在 ``Config.py``:
+数据配置在 ``config\SQLConfig.py``:
 
 ![img.png](img.png)
 

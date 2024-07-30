@@ -39,10 +39,8 @@ def insert_creator_user(data, redis_stats_id):
             mysql.insertOne(creator_user_insert_sql, creator_user)
 
     except Exception as ex:
-        logging.logger.error(creator_user)
-        logging.logger.error(ex)
         mysql.dispose(isEnd=0)
-        return
+        raise Exception(ex)
 
     user_info = data["user_data"]
     user_info_insert_sql = (
@@ -59,10 +57,8 @@ def insert_creator_user(data, redis_stats_id):
         else:
             mysql.insertOne(user_info_insert_sql, user_info)
     except Exception as ex:
-        logging.logger.error(user_info)
-        logging.logger.error(ex)
         mysql.dispose(isEnd=0)
-        return
+        raise Exception(ex)
 
     user_stats = data["user_stats"]
     user_stats_insert_sql = (
@@ -79,10 +75,8 @@ def insert_creator_user(data, redis_stats_id):
         else:
             mysql.insertOne(user_stats_insert_sql, user_stats)
     except Exception as ex:
-        logging.logger.error(user_stats)
-        logging.logger.error(ex)
         mysql.dispose(isEnd=0)
-        return
+        raise Exception(ex)
     mysql.dispose()
 
 
@@ -91,14 +85,15 @@ def insert_data(data, unique_id_list):
         return
     for uniq_id in unique_id_list:
         handle = uniq_id["handle"]["value"]
-        redis_stats_id = redis_client.get(redis_user_info_key + handle)
         try:
+            if data.get(handle) is None:
+                raise Exception("储存数据中：" + handle + " 不存在")
+            redis_stats_id = redis_client.get(redis_user_info_key + handle)
             if redis_stats_id:
                 insert_creator_user(data[handle], True)
             else:
                 insert_creator_user(data[handle], False)
             redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
         except Exception as ex:
-            logging.logger.error(handle+"出错!")
+            logging.logger.error(handle + "出错!")
             logging.logger.error(ex)
-

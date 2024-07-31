@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import log
 import excel
 import argparse
+from config import RedisKeyConstants as RedisKeyConstants
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -32,11 +33,10 @@ thread_num = 2
 
 # redis初始化
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
-redis_key_name = "python_data_crawl"
-redis_key_error_num = redis_key_name + "_error_num"
-redis_key_response_num = redis_key_name + "_response_num"
-redis_key_tik_tok_request_error_num = redis_key_name + "_tik_tok_request_error_num"
-redis_key_tik_tok_request_wait_num = redis_key_name + "_tik_tok_request_wait_num"
+redis_key_error_num = RedisKeyConstants.redis_key_error_num
+redis_key_response_num = RedisKeyConstants.redis_key_response_num
+redis_key_tik_tok_request_error_num = RedisKeyConstants.redis_key_tik_tok_request_error_num
+redis_key_tik_tok_request_wait_num = RedisKeyConstants.redis_key_tik_tok_request_wait_num
 redis_client.set(redis_key_error_num, 0)
 redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)

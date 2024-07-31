@@ -2,6 +2,7 @@ from MySqlCon import Mysql
 import log
 import json
 import redis
+from config import RedisKeyConstants as RedisKeyConstants
 
 # 申请资源
 logging = log.Logger("sql.log", level='INFO')
@@ -9,7 +10,7 @@ logging = log.Logger("sql.log", level='INFO')
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
 redis_pipe = redis_client.pipeline()
 
-redis_user_info_key = "tiktok_user_info:"
+redis_user_info_key = RedisKeyConstants.redis_user_info_key
 
 
 def insert_creator_user(data, redis_stats_id):
@@ -93,7 +94,12 @@ def insert_data(data, unique_id_list):
                 insert_creator_user(data[handle], True)
             else:
                 insert_creator_user(data[handle], False)
-            redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
+            redis_data = {
+                "id": data[handle]["user_data"]["id"],
+                "unique_id": data[handle]["user_data"]["unique_id"],
+                "signature": data[handle]["user_data"]["signature"]
+            }
+            redis_client.set(redis_user_info_key + handle, json.dumps(redis_data))
         except Exception as ex:
             logging.logger.error(handle + "出错!")
             logging.logger.error(ex)

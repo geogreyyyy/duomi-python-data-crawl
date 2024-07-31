@@ -75,6 +75,13 @@ class Mysql(object):
             result = False
         return result
 
+    def create_table(self, sql):
+        """
+        分表创建
+        """
+        count = self._cursor.execute(sql)
+        return count
+
     def getMany(self, sql, num, param=None):
         """
         @summary: 执行查询，并取出num条结果
@@ -169,5 +176,9 @@ class Mysql(object):
             self.end('commit')
         else:
             self.end('rollback');
+        self._cursor.close()
+        self._conn.close()
+
+    def close_create(self):
         self._cursor.close()
         self._conn.close()

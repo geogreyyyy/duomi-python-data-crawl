@@ -38,7 +38,7 @@ redis_key_tik_tok_request_error_num = RedisKeyConstants.redis_key_tik_tok_reques
 # redis请求状态
 redis_key_tiktok_shop_num = RedisKeyConstants.redis_key_tiktok_shop_num
 # 爬虫服务启动状态
-affiliate_center_crawl_status = RedisKeyConstants.affiliate_center_crawl_status+"local"
+affiliate_center_crawl_status = RedisKeyConstants.affiliate_center_crawl_status + "local"
 
 # log初始化
 logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
@@ -259,11 +259,20 @@ def get_tiktok_shop_user_unique_id():
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
+# a-z aa-az aaa-aaz
+def print_extended_alphabet_2():
+    search_data = []
+    for char1 in range(ord('a'), ord('z') + 1):
+        search_data.append(str(chr(char1)))
+        for char2 in range(ord('a'), ord('z') + 1):
+            search_data.append(str(chr(char1) + chr(char2)))
+            for char3 in range(ord('a'), ord('z') + 1):
+                search_data.append(str(chr(char1) + chr(char2) + chr(char3)))
+    return search_data
+
+
 if __name__ == "__main__":
-    enums_request = ["ad", "dd", "dd", "dd", "ed", "fd", "gd", "hd", "id", "jd", "kd", "ld", "nd", "md",
-                     "od", "pd",
-                     "qd", "rd", "sd", "td",
-                     "ud", "vd", "wd", "xd", "yd", "zd"]
+    enums_request = print_extended_alphabet_2()
     page = args.page
     redis_client.set(affiliate_center_crawl_status, 1)
     for enum in enums_request:

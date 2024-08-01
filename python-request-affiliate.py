@@ -298,9 +298,12 @@ if __name__ == "__main__":
         user_list = []
         # 轮询分页
         while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
-            rsp_data = get_tiktok_shop_user_unique_id()
-            tiktok_shop_request_enable = rsp_data[1]
-            user_list.extend(rsp_data[0])
+            try:
+                rsp_data = get_tiktok_shop_user_unique_id()
+                tiktok_shop_request_enable = rsp_data[1]
+                user_list.extend(rsp_data[0])
+            except Exception as ex:
+                logging.logger.error(ex)
             # redis_client.set("test-unused-data", json.dumps(user_list))
         logging.logger.info(tiktok_shop_pagination)
         # 分批次爬取和写入

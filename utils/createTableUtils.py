@@ -1,9 +1,9 @@
 import sys
-import time
 
-import redisLock
 
 sys.path.append("..")
+from utils import redisLock
+
 from MySqlCon import Mysql
 from config import RedisKeyConstants as RedisKeyConstants
 

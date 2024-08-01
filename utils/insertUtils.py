@@ -2,9 +2,9 @@ import log
 import json
 import redis
 import sys
-import createTableUtils
 
 sys.path.append("..")
+from utils import createTableUtils
 from config import RedisKeyConstants as RedisKeyConstants
 from config import SQLConfig as SQLConfig
 from MySqlCon import Mysql

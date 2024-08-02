@@ -1,3 +1,5 @@
+# coding:utf-8
+
 redis_key_name = "python_data_crawl"
 # redis异常状态
 affiliate_center_crawl_status = redis_key_name+"_affiliate_center_crawl_status:"

@@ -279,8 +279,8 @@ def print_extended_alphabet_2():
         for char2 in range(ord('a'), ord('z') + 1):
             search_data.append(str(chr(char1) + chr(char2)))
             for char3 in range(ord('a'), ord('z') + 1):
-                search_data.append(str(chr(char1) + chr(char2) + chr(char3)))
-    search_data.reverse()
+                for char4 in range(ord('a'), ord('z') + 1):
+                    search_data.append(str(chr(char1) + chr(char2) + chr(char3) + chr(char4)))
     return search_data
 
 

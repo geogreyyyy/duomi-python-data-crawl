@@ -1,3 +1,5 @@
+import time
+
 import log
 import json
 import redis
@@ -5,6 +7,7 @@ import sys
 
 sys.path.append("..")
 from utils import createTableUtils
+from utils import redisLock
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
 from MySqlCon import Mysql
@@ -108,22 +111,28 @@ def insert_data(data, unique_id_list):
     if len(data) == 0:
         return
     get_table_index(len(data))
-    for uniq_id in unique_id_list:
-        handle = uniq_id["handle"]["value"]
-        try:
-            if data.get(handle) is None:
-                raise Exception("储存数据中：" + handle + " 不存在")
-            redis_stats_id = redis_client.get(redis_user_info_key + handle)
-            if redis_stats_id:
-                insert_creator_user(data[handle], True)
-            else:
-                insert_creator_user(data[handle], False)
-            redis_data = {
-                "id": data[handle]["user_data"]["id"],
-                "unique_id": data[handle]["user_data"]["unique_id"],
-                "signature": data[handle]["user_data"]["signature"]
-            }
-            redis_client.set(redis_user_info_key + handle, json.dumps(redis_data))
-        except Exception as ex:
-            logging.logger.error(handle + "出错!")
-            logging.logger.error(ex)
+    lock = redisLock.acquire_lock(RedisKeyConstants.lock_insert_data)
+    while True:
+        if lock:
+            for uniq_id in unique_id_list:
+                handle = uniq_id["handle"]["value"]
+                try:
+                    if data.get(handle) is None:
+                        raise Exception("储存数据中：" + handle + " 不存在")
+                    redis_stats_id = redis_client.get(redis_user_info_key + handle)
+                    if redis_stats_id:
+                        insert_creator_user(data[handle], True)
+                    else:
+                        insert_creator_user(data[handle], False)
+                    redis_data = {
+                        "id": data[handle]["user_data"]["id"],
+                        "unique_id": data[handle]["user_data"]["unique_id"],
+                        "signature": data[handle]["user_data"]["signature"]
+                    }
+                    redis_client.set(redis_user_info_key + handle, json.dumps(redis_data))
+                except Exception as ex:
+                    logging.logger.error(handle + "出错!")
+                    logging.logger.error(ex)
+            break
+        else:
+            time.sleep(3)

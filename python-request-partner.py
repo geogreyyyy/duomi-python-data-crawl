@@ -9,6 +9,7 @@ import log
 import argparse
 from utils import insertUtils
 from config import RedisKeyConstants as RedisKeyConstants
+from config import Config
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -32,7 +33,7 @@ pool = ThreadPoolExecutor(max_workers=8)
 thread_num = 2
 
 # redis初始化
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
 # redis异常状态
 redis_key_error_num = RedisKeyConstants.redis_key_error_num
 redis_key_response_num = RedisKeyConstants.redis_key_response_num

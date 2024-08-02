@@ -1,9 +1,14 @@
 import time
 import uuid
 import redis
-
 from concurrent.futures import ThreadPoolExecutor
-redis_client = redis.Redis(host='127.0.0.1', port=6379)
+
+import sys
+
+sys.path.append("..")
+from config import Config
+
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
 
 
 # 加锁的过程
@@ -54,7 +59,6 @@ def release_lock(lock_name, identifire):
     return False
 
 
-
 pool = ThreadPoolExecutor(max_workers=8)
 
 
@@ -72,7 +76,7 @@ def exec_test(lockname, args):
         # break
     else:
         print('获取redis分布式锁失败,其他进程正在使用')
-            # time.sleep(1)
+        # time.sleep(1)
 
 
 if __name__ == '__main__':

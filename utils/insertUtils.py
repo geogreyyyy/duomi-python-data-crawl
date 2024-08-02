@@ -6,13 +6,13 @@ import sys
 sys.path.append("..")
 from utils import createTableUtils
 from config import RedisKeyConstants as RedisKeyConstants
-from config import SQLConfig as SQLConfig
+from config import Config
 from MySqlCon import Mysql
 
 # 申请资源
 logging = log.Logger("../sql.log", level='INFO')
 
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
 redis_pipe = redis_client.pipeline()
 
 redis_user_info_key = RedisKeyConstants.redis_user_info_key
@@ -94,7 +94,7 @@ def get_table_index(data_num):
     result = mysql.getOne("select count(id) as num from tiktok_user_info")
     table_index = createTableUtils.get_table_index()
     table_name = ""
-    if result["num"] + data_num > SQLConfig.MAX_TABLE_NUM:
+    if result["num"] + data_num > Config.MAX_TABLE_NUM:
         table_name = "_" + str(table_index["next_index"])
         createTableUtils.create_new_table()
     elif table_index["this_index"] != 0:

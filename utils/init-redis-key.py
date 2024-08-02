@@ -7,8 +7,9 @@ import numpy as np
 
 sys.path.append("..")
 from config import RedisKeyConstants as RedisKeyConstants
+from config import Config
 
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
 pipe = redis_client.pipeline()
 redis_user_info_key = RedisKeyConstants.redis_user_info_key
 

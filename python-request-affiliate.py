@@ -9,6 +9,7 @@ import argparse
 from utils import insertUtils
 from concurrent.futures import ThreadPoolExecutor
 from config import RedisKeyConstants as RedisKeyConstants
+from config import Config
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -30,7 +31,7 @@ args = parser.parse_args()
 pool = ThreadPoolExecutor(max_workers=8)
 
 # redis初始化
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
 # redis异常状态
 redis_key_error_num = RedisKeyConstants.redis_key_error_num
 redis_key_response_num = RedisKeyConstants.redis_key_response_num
@@ -225,8 +226,17 @@ def get_tiktok_shop_user_unique_id():
            )
     headers = {
         'content-type': 'application/json',
-        'Cookie': "_m4b_theme_=new; passport_csrf_token=635392b69d95d2951284887128d76446; passport_csrf_token_default=635392b69d95d2951284887128d76446; _ttp=2jwpn2eT1L5yCp8yNilPMDDlxPx; ttwid=1%7CwXqPCsH4mgdnVtPmRW5UT_DkQ8bByEV1DmaL1JRrLyU%7C1722308157%7C929632783a88fbda3443226e8fd7a081e7b41459c05d0e791fa1e0a98096c619; _uetsid=3e4c15204e1f11efb75eab3e89612b20; _uetvid=3e4c4e204e1f11ef86b30ba1b751ff83; _ga=GA1.1.1616180698.1722308157; _fbp=fb.1.1722308157416.764324980187603569; d_ticket_ads=0ab1ca976e6a9ea39e3656de8c482bef5b2b7; sso_auth_status_ads=e564ae9cc9d507b305a80f3f112611ad; sso_auth_status_ss_ads=e564ae9cc9d507b305a80f3f112611ad; sso_uid_tt_ads=992a59863a207c29bfd45e3ca72865b3d9538c71677c3c6b1168501d2f805d88; sso_uid_tt_ss_ads=992a59863a207c29bfd45e3ca72865b3d9538c71677c3c6b1168501d2f805d88; sso_user_ads=40f26e6920c6c1fff86244cef08e5742; sso_user_ss_ads=40f26e6920c6c1fff86244cef08e5742; sid_ucp_sso_v1_ads=1.0.0-KDBlMmM3YzVkNDU4NTU1ZWE0ZWJkNDE3ODVlNzcyNTg3NjA0Mjc4MWQKIAiGiKCu1sy5-WQQlrKhtQYY5B8gDDCBzcunBjgBQOsHEAMaA3NnMSIgNDBmMjZlNjkyMGM2YzFmZmY4NjI0NGNlZjA4ZTU3NDI; ssid_ucp_sso_v1_ads=1.0.0-KDBlMmM3YzVkNDU4NTU1ZWE0ZWJkNDE3ODVlNzcyNTg3NjA0Mjc4MWQKIAiGiKCu1sy5-WQQlrKhtQYY5B8gDDCBzcunBjgBQOsHEAMaA3NnMSIgNDBmMjZlNjkyMGM2YzFmZmY4NjI0NGNlZjA4ZTU3NDI; sid_guard_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb%7C1722308887%7C863999%7CFri%2C+09-Aug-2024+03%3A08%3A06+GMT; uid_tt_tiktokseller=e1b0c54cf6569bf2f1176a88b75a08effec547331f23785853b936d716e777b7; uid_tt_ss_tiktokseller=e1b0c54cf6569bf2f1176a88b75a08effec547331f23785853b936d716e777b7; sid_tt_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb; sessionid_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb; sessionid_ss_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb; sid_ucp_v1_tiktokseller=1.0.0-KDQzMThjNGI0NjY0N2UxMGQyNDlkYWU5MjIzYzViZTM2OTY1ZGFmZjgKGgiGiKCu1sy5-WQQl7KhtQYY5B8gDDgBQOsHEAMaA3NnMSIgZmRkMDI3NDAyNDdlNWQyNDdjYzVlOGM1YzUxN2JiZWI; ssid_ucp_v1_tiktokseller=1.0.0-KDQzMThjNGI0NjY0N2UxMGQyNDlkYWU5MjIzYzViZTM2OTY1ZGFmZjgKGgiGiKCu1sy5-WQQl7KhtQYY5B8gDDgBQOsHEAMaA3NnMSIgZmRkMDI3NDAyNDdlNWQyNDdjYzVlOGM1YzUxN2JiZWI; msToken=MMfh7Hc3cu9s9XX-cgTOP64ljCpxCz1QvjLUwH1cgMzDgeeHJMiQ0BfH6MFrwC29o5msFPlbM5qait0hZIFPa0Llx_MPaideOr3ICLbcFOs=; _ga_BZBQ2QHQSP=GS1.1.1722308157.1.1.1722308888.0.0.0; SELLER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjcyNzQxMjk2NzEzMzA0NjQ3NzQsIk9lY1VpZCI6NzQ5NTI3OTM2MjQxNjYwOTg5MywiT2VjU2hvcElkIjo3NDk1Mjc5MzYyNDE2NjA5ODkzLCJTaG9wUmVnaW9uIjoiIiwiR2xvYmFsU2VsbGVySWQiOjc0OTUyNzkzNjI0MTY2MDk4OTMsIlNlbGxlcklkIjo3NDk1Mjc5MzYyNDE2NjA5ODkzLCJleHAiOjE3MjIzOTUzMDAsIm5iZiI6MTcyMjMwNzkwMH0.e6Pznp-6m3LR73k8ncEpUY0j_co56-96-csAZgTOcmI; SHOP_ID=7274128858490700074; s_v_web_id=verify_lz7ub78r_uLa0en4t_kHvq_4feV_BISG_Ignl1ptV6EQt; user_oec_info=0a5302f3121405d80c52e605a78aac19d564a75e395f0d1470a6260617663f13ad59888e8617734402e1427de24f36e4a73ac8682e57a194913dc1e93461c3d1cbee9d15e3ae2b61e28b41fdbbd7f0fbb2bc6869671a490a3c55f5fde4b4a1103bc71a9e2aa7c62a427a74ad39af762737559b3defbd420bbe44971c5a51de964eb6fb519688b8160b6c54b65ae8f6574bfcffb33110f080d80d1886d2f6f20d220104a66f9ccb; i18next=en; odin_tt=cca347bad6b0d1d78d5840ad1cd6f9164e9c8626bac0c63699259f8d126722bb4c0d9347cc871f5fc01994ee231b2722aa641da8d154858211c19d3e0cd37e7c",
-        'Priority': 'u=1, i',
+        'cookie': "_m4b_theme_=new; passport_csrf_token=635392b69d95d2951284887128d76446; passport_csrf_token_default=635392b69d95d2951284887128d76446; _ttp=2jwpn2eT1L5yCp8yNilPMDDlxPx; ttwid=1%7CwXqPCsH4mgdnVtPmRW5UT_DkQ8bByEV1DmaL1JRrLyU%7C1722308157%7C929632783a88fbda3443226e8fd7a081e7b41459c05d0e791fa1e0a98096c619; _uetvid=3e4c4e204e1f11ef86b30ba1b751ff83; _ga=GA1.1.1616180698.1722308157; _fbp=fb.1.1722308157416.764324980187603569; d_ticket_ads=0ab1ca976e6a9ea39e3656de8c482bef5b2b7; sso_auth_status_ads=e564ae9cc9d507b305a80f3f112611ad; sso_auth_status_ss_ads=e564ae9cc9d507b305a80f3f112611ad; sso_uid_tt_ads=992a59863a207c29bfd45e3ca72865b3d9538c71677c3c6b1168501d2f805d88; sso_uid_tt_ss_ads=992a59863a207c29bfd45e3ca72865b3d9538c71677c3c6b1168501d2f805d88; sso_user_ads=40f26e6920c6c1fff86244cef08e5742; sso_user_ss_ads=40f26e6920c6c1fff86244cef08e5742; sid_ucp_sso_v1_ads=1.0.0-KDBlMmM3YzVkNDU4NTU1ZWE0ZWJkNDE3ODVlNzcyNTg3NjA0Mjc4MWQKIAiGiKCu1sy5-WQQlrKhtQYY5B8gDDCBzcunBjgBQOsHEAMaA3NnMSIgNDBmMjZlNjkyMGM2YzFmZmY4NjI0NGNlZjA4ZTU3NDI; ssid_ucp_sso_v1_ads=1.0.0-KDBlMmM3YzVkNDU4NTU1ZWE0ZWJkNDE3ODVlNzcyNTg3NjA0Mjc4MWQKIAiGiKCu1sy5-WQQlrKhtQYY5B8gDDCBzcunBjgBQOsHEAMaA3NnMSIgNDBmMjZlNjkyMGM2YzFmZmY4NjI0NGNlZjA4ZTU3NDI; sid_guard_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb%7C1722308887%7C863999%7CFri%2C+09-Aug-2024+03%3A08%3A06+GMT; uid_tt_tiktokseller=e1b0c54cf6569bf2f1176a88b75a08effec547331f23785853b936d716e777b7; uid_tt_ss_tiktokseller=e1b0c54cf6569bf2f1176a88b75a08effec547331f23785853b936d716e777b7; sid_tt_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb; sessionid_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb; sessionid_ss_tiktokseller=fdd02740247e5d247cc5e8c5c517bbeb; sid_ucp_v1_tiktokseller=1.0.0-KDQzMThjNGI0NjY0N2UxMGQyNDlkYWU5MjIzYzViZTM2OTY1ZGFmZjgKGgiGiKCu1sy5-WQQl7KhtQYY5B8gDDgBQOsHEAMaA3NnMSIgZmRkMDI3NDAyNDdlNWQyNDdjYzVlOGM1YzUxN2JiZWI; ssid_ucp_v1_tiktokseller=1.0.0-KDQzMThjNGI0NjY0N2UxMGQyNDlkYWU5MjIzYzViZTM2OTY1ZGFmZjgKGgiGiKCu1sy5-WQQl7KhtQYY5B8gDDgBQOsHEAMaA3NnMSIgZmRkMDI3NDAyNDdlNWQyNDdjYzVlOGM1YzUxN2JiZWI; msToken=MMfh7Hc3cu9s9XX-cgTOP64ljCpxCz1QvjLUwH1cgMzDgeeHJMiQ0BfH6MFrwC29o5msFPlbM5qait0hZIFPa0Llx_MPaideOr3ICLbcFOs=; _ga_BZBQ2QHQSP=GS1.1.1722308157.1.1.1722308888.0.0.0; SHOP_ID=7274128858490700074; s_v_web_id=verify_lz7ub78r_uLa0en4t_kHvq_4feV_BISG_Ignl1ptV6EQt; i18next=en; user_oec_info=0a5321d746c1f5fb676108dc9b78ad06fa02cd2e010517ba5b12afd49906f7b84a898aaddcfde1c11313009a0c99725e817d91b0cf42ec5f750160846d251da4c027648fbdfc0cb273a7b9fe0401331f510d82be581a490a3c9c3f21e36b406e0c303c6304e784094199557c8032eacdade6e8dd574c8e44547c68d8a1da5c4fbf15a657d76e57bf6205e1f76203158479bfe4d1b210f78dd80d1886d2f6f20d2201049881c30b; odin_tt=91c390c83ec4cbb24e5dfe39af3655ba483f7b6b3fa82825bb59096742631f9d26bd26ecc444618b66818ee9fc6f1659c38b1887a1be9557cb2dd299f27ceea9",
+        'priority': 'u=1, i',
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+        "origin": "https://affiliate-us.tiktok.com",
+        "referer": "https://affiliate-us.tiktok.com/connection/creator?source_from=seller_affiliate_landing&shop_region=US",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "Windows",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin"
     }
     logging.logger.info("请求url：" + url)
     try:
@@ -268,6 +278,7 @@ def print_extended_alphabet_2():
             search_data.append(str(chr(char1) + chr(char2)))
             for char3 in range(ord('a'), ord('z') + 1):
                 search_data.append(str(chr(char1) + chr(char2) + chr(char3)))
+    search_data.reverse()
     return search_data
 
 
@@ -288,6 +299,7 @@ if __name__ == "__main__":
                 "size": 12,
                 "page": 0
             },
+            "filter_params": {},
             "algorithm": 1,
             "query": str(enum),
             "query_type": 1

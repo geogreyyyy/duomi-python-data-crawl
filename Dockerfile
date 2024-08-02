@@ -7,6 +7,6 @@ WORKDIR /app
 
 RUN pip install --upgrade pip
 RUN pip install requests redis  DBUtils xlwt selenium pymysql
+RUN pip install lxml
 
-#CMD ["python", "app.py"]
-CMD ls
+CMD ["python", "python-request-affiliate.py", "-p=10000"]

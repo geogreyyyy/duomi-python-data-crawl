@@ -1,7 +1,7 @@
 # coding:utf-8
 
 # MYSQL
-DBHOST = "localhost"
+DBHOST = "192.168.110.26"
 DBPORT = 3306
 DBUSER = "root"
 DBPWD = "123456"

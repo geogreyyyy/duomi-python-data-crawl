@@ -13,4 +13,4 @@ docker build -t python-data-crawl-run:1.0 .
 
 newimages=$(docker images| grep "python-data-crawl-run" | awk '{print $3}')
 
-docker run -itd --net=host --name python-data-crawl-run  $newimages
+docker run -itd  --name python-data-crawl-run --network host  $newimages

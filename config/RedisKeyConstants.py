@@ -15,3 +15,4 @@ redis_user_info_key = "tiktok_user_info:"
 # -----------------redis lock -----------------------
 redis_lock_name = redis_key_name + "_redis_lock:"
 redis_lock_create_table = redis_lock_name+"create_table"
+lock_insert_data = redis_lock_name+"lock_insert_data"

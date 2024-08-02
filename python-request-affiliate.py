@@ -90,11 +90,11 @@ def set_user_info(user_data, user_stats, create_user_info):
             if create_user_info.get('med_gmv_revenue_range') is not None:
                 resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range')["value"]
             if create_user_info.get('creator_bind_mcn_name') is not None:
-                resp_data_creator_data["creator_bind_mcn_name"] = create_user_info.get('creator_bind_mcn_name')
+                resp_data_creator_data["creator_bind_mcn_name"] = str(create_user_info.get('creator_bind_mcn_name'))
             if create_user_info.get('category') is not None:
-                resp_data_creator_data["industry_groups"] = create_user_info.get('category')
+                resp_data_creator_data["industry_groups"] = str(create_user_info.get('category'))
             if create_user_info.get('top_follower_gender') is not None:
-                resp_data_creator_data["top_follower_gender"] = create_user_info.get('top_follower_gender')
+                resp_data_creator_data["top_follower_gender"] = str(create_user_info.get('top_follower_gender'))
             if create_user_info.get('top_follower_ages') is not None:
                 resp_data_creator_data["top_follower_ages"] = ",".join(create_user_info.get('top_follower_ages'))
             if create_user_info.get('follower_cnt') is not None:
@@ -102,7 +102,7 @@ def set_user_info(user_data, user_stats, create_user_info):
             else:
                 resp_data_creator_data["follower_cnt"] = "0"
             if create_user_info.get('top_follower_age') is not None:
-                resp_data_creator_data["top_follower_age"] = create_user_info.get('top_follower_age')
+                resp_data_creator_data["top_follower_age"] = str(create_user_info.get('top_follower_age'))
             if create_user_info.get('video_avg_view_cnt') is not None:
                 resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt')["value"]
             if user_stats is not None:

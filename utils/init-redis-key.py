@@ -33,6 +33,6 @@ class MyEncoder(json.JSONEncoder):
 
 result = mysql.getAll(sql)
 for item in result:
-    uniqueId = str(item.get("unique_id"), encoding="utf-8")
+    uniqueId = str(item.get("unique_id"))
     pipe.set(redis_user_info_key + uniqueId, json.dumps(item,cls=MyEncoder,indent=4))
 pipe.execute()

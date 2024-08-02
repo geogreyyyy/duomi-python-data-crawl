@@ -42,6 +42,7 @@ def insert_creator_user(data, redis_stats_id):
                                                                   "top_follower_gender=%(top_follower_gender)s,top_follower_ages=%(top_follower_ages)s,follower_cnt=%("
                                                                   "follower_cnt)s,top_follower_age=%(top_follower_age)s,video_avg_view_cnt=%(video_avg_view_cnt)s"
                                                                   "WHERE user_id = %(user_id)s")
+
     try:
         if redis_stats_id:
             mysql.update(creator_user_update_sql, creator_user)
@@ -115,7 +116,7 @@ def insert_data(data, unique_id_list):
     if lock:
         try:
             for uniq_id in unique_id_list:
-                handle = uniq_id["handle"]["value"]
+                handle = str(uniq_id["handle"]["value"])
                 try:
                     if data.get(handle) is None:
                         raise Exception("储存数据中：" + handle + " 不存在")
@@ -124,12 +125,7 @@ def insert_data(data, unique_id_list):
                         insert_creator_user(data[handle], True)
                     else:
                         insert_creator_user(data[handle], False)
-                    redis_data = {
-                        "id": data[handle]["user_data"]["id"],
-                        "unique_id": data[handle]["user_data"]["unique_id"],
-                        "signature": data[handle]["user_data"]["signature"]
-                    }
-                    redis_client.set(redis_user_info_key + handle, json.dumps(redis_data))
+                    redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
                 except Exception as ex:
                     logging.logger.error(handle + "出错!")
                     logging.logger.error(ex)

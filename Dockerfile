@@ -8,5 +8,6 @@ WORKDIR /app
 RUN pip install --upgrade pip
 RUN pip install requests redis  DBUtils xlwt selenium pymysql
 RUN pip install lxml
+RUN pip install cryptography
 
 CMD ["python", "python-request-affiliate.py", "-p=10000"]

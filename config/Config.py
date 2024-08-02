@@ -3,8 +3,8 @@
 # MYSQL
 DBHOST = "192.168.110.26"
 DBPORT = 3306
-DBUSER = "root"
-DBPWD = "123456"
+DBUSER = "data-crawl"
+DBPWD = "data-crawl-135711"
 DBNAME = "crm-data-crawl"
 DBCHAR = "utf8mb4"
 

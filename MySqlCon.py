@@ -5,10 +5,8 @@
 ３、在输入的值中不需要使用转意函数，系统会自动处理
 """
 
-import MySQLdb
-from MySQLdb.cursors import DictCursor
-from DBUtils.PooledDB import PooledDB
-# from PooledDB import PooledDB
+import pymysql
+from pymysql.cursors import DictCursor
 from config import Config as Config
 
 """
@@ -25,21 +23,15 @@ class Mysql(object):
     __pool = None
 
     def __init__(self):
-        # 数据库构造函数，从连接池中取出连接，并生成操作游标
-        self._conn = Mysql.__getConn()
+        # 连接到数据库
+        self._conn = pymysql.connect(host=Config.DBHOST,
+                                     port=Config.DBPORT,
+                                     user=Config.DBUSER,
+                                     passwd=Config.DBPWD,
+                                     db=Config.DBNAME,
+                                     charset=Config.DBCHAR,
+                                     cursorclass=DictCursor)
         self._cursor = self._conn.cursor()
-
-    @staticmethod
-    def __getConn():
-        """
-        @summary: 静态方法，从连接池中取出连接
-        @return MySQLdb.connection
-        """
-        if Mysql.__pool is None:
-            __pool = PooledDB(creator=MySQLdb, mincached=1, maxcached=20,
-                              host=Config.DBHOST, port=Config.DBPORT, user=Config.DBUSER, passwd=Config.DBPWD,
-                              db=Config.DBNAME, use_unicode=False, charset=Config.DBCHAR, cursorclass=DictCursor)
-        return __pool.connection()
 
     def getAll(self, sql, param=None):
         """

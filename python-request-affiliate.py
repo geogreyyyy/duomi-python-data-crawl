@@ -331,7 +331,6 @@ if __name__ == "__main__":
             insertUtils.insert_data(thread1.result(), result_data[ranges_for[0][0]:ranges_for[0][1]])
             insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
         logging.logger.info("爬取数据完成,查找关键词:" + str(enum))
-        logging.logger.info(f'耗时:{time.time() - t:.4f}s')
         time.sleep(10)
     pool.shutdown()
     redis_client.set(affiliate_center_crawl_status, 0)

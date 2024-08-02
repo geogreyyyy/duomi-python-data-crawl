@@ -1,3 +1,4 @@
+import logging
 import sys
 import time
 
@@ -74,29 +75,25 @@ def get_table_index():
 
 def create_new_table():
     try:
-        while True:
-            lock = redisLock.acquire_lock(RedisKeyConstants.redis_lock_create_table)
-            if lock:
-                mysql = Mysql()
-                result = mysql.getAll(get_index_SQL)
-                if len(result) != 1:
-                    raise Exception("数据库新建表失败，create_table_index表下标没有数据")
-                result = result[0]
-                try:
-                    mysql.create_table(create_creator_user_info(str(result["next_index"])))
-                    mysql.create_table(create_user_info(str(result["next_index"])))
-                    mysql.create_table(create_user_stats(str(result["next_index"])))
-                    result["this_index"] = result["next_index"]
-                    result["next_index"] = result["next_index"] + 1
-                    mysql.update(set_index_SQL, result)
-                    mysql.dispose()
-                except Exception as ex:
-                    print(ex)
-                finally:
-                    mysql.close_create()
-                break
-            else:
-                time.sleep(3)
+        lock = redisLock.acquire_lock(RedisKeyConstants.redis_lock_create_table)
+        if lock:
+            mysql = Mysql()
+            result = mysql.getAll(get_index_SQL)
+            if len(result) != 1:
+                raise Exception("数据库新建表失败，create_table_index表下标没有数据")
+            result = result[0]
+            try:
+                mysql.create_table(create_creator_user_info(str(result["next_index"])))
+                mysql.create_table(create_user_info(str(result["next_index"])))
+                mysql.create_table(create_user_stats(str(result["next_index"])))
+                result["this_index"] = result["next_index"]
+                result["next_index"] = result["next_index"] + 1
+                mysql.update(set_index_SQL, result)
+                mysql.dispose()
+            except Exception as ex:
+                print(ex)
+            finally:
+                mysql.close_create()
     except Exception as ex:
         print(ex)
     finally:

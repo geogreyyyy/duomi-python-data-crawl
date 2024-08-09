@@ -274,13 +274,14 @@ def get_tiktok_shop_user_unique_id():
 # a-z aa-az aaa-aaz
 def print_extended_alphabet_2():
     search_data = []
-    for char1 in range(ord('a'), ord('z') + 1):
+    for char1 in range(ord('0'), ord('9') + 1):
         search_data.append(str(chr(char1)))
-        for char2 in range(ord('a'), ord('z') + 1):
+        for char2 in range(ord('0'), ord('9') + 1):
             search_data.append(str(chr(char1) + chr(char2)))
-            for char3 in range(ord('a'), ord('z') + 1):
-                for char4 in range(ord('a'), ord('z') + 1):
+            for char3 in range(ord('0'), ord('9') + 1):
+                for char4 in range(ord('0'), ord('9') + 1):
                     search_data.append(str(chr(char1) + chr(char2) + chr(char3) + chr(char4)))
+    search_data.reverse()
     return search_data
 
 

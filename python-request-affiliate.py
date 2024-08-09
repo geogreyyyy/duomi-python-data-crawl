@@ -207,12 +207,12 @@ def paginate_user_id_list(total, N):
 
 # 从tiktok shop平台获取unique id列表
 def get_tiktok_shop_user_unique_id():
-    url = ("https://affiliate-us.tiktok.com/api/v1/oec/affiliate/creator/marketplace/find?"
-           "user_language=en"
-           "&aid=4331"
+    url = ("https://affiliate.tiktokglobalshop.com/api/v1/oec/affiliate/creator/marketplace/find?"
+           "user_language=zh-CN"
+           "&aid=6556"
            "&app_name=i18n_ecom_alliance"
            "&device_id=0"
-           "&fp=verify_lz7ub78r_uLa0en4t_kHvq_4feV_BISG_Ignl1ptV6EQt"
+           "&fp=verify_lzmbhmry_Y2WKlvR1_8Oh0_4WTA_Br6T_JIW6yUBo8eMV"
            "&device_platform=web"
            "&cookie_enabled=true"
            "&screen_width=1920"
@@ -220,10 +220,10 @@ def get_tiktok_shop_user_unique_id():
            "&browser_language=zh-CN"
            "&browser_platform=Win32"
            "&browser_name=Mozilla"
-           "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F127.0.0.0+Safari%2F537.36+Edg%2F127.0.0.0"
+           "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F127.0.0.0+Safari%2F537.36"
            "&browser_online=true"
-           "&timezone_name=Etc%2FGMT-8"
-           "&oec_seller_id=7495279362416609893"
+           "&timezone_name=Asia%2FShanghai"
+           "&oec_seller_id=7495378371744074024"
            "&shop_region=US"
            )
     headers = {

@@ -15,7 +15,8 @@ from MySqlCon import Mysql
 # 申请资源
 logging = log.Logger("../sql.log", level='INFO')
 
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+                           password=Config.REDIS_PASSWORD)
 redis_pipe = redis_client.pipeline()
 
 redis_user_info_key = RedisKeyConstants.redis_user_info_key

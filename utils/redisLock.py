@@ -8,7 +8,8 @@ import sys
 sys.path.append("..")
 from config import Config
 
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+                           password=Config.REDIS_PASSWORD)
 
 
 # 加锁的过程

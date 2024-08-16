@@ -9,7 +9,8 @@ sys.path.append("..")
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
 
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+                           password=Config.REDIS_PASSWORD)
 pipe = redis_client.pipeline()
 redis_user_info_key = RedisKeyConstants.redis_user_info_key
 
@@ -34,5 +35,5 @@ class MyEncoder(json.JSONEncoder):
 result = mysql.getAll(sql)
 for item in result:
     uniqueId = str(item.get("unique_id"))
-    pipe.set(redis_user_info_key + uniqueId, json.dumps(item,cls=MyEncoder,indent=4))
+    pipe.set(redis_user_info_key + uniqueId, json.dumps(item, cls=MyEncoder, indent=4))
 pipe.execute()

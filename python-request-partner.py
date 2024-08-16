@@ -35,7 +35,8 @@ pool = ThreadPoolExecutor(max_workers=8)
 thread_num = 2
 
 # redis初始化
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+                           password=Config.REDIS_PASSWORD)
 # redis异常状态
 redis_key_error_num = RedisKeyConstants.redis_key_error_num
 redis_key_response_num = RedisKeyConstants.redis_key_response_num

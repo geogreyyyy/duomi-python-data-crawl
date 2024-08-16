@@ -33,7 +33,8 @@ args = parser.parse_args()
 pool = ThreadPoolExecutor(max_workers=8)
 
 # redis初始化
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB)
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+                           password=Config.REDIS_PASSWORD)
 # redis异常状态
 redis_key_error_num = RedisKeyConstants.redis_key_error_num
 redis_key_response_num = RedisKeyConstants.redis_key_response_num
@@ -332,6 +333,6 @@ if __name__ == "__main__":
             insertUtils.insert_data(thread1.result(), result_data[ranges_for[0][0]:ranges_for[0][1]])
             insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
         logging.logger.info("爬取数据完成,查找关键词:" + str(enum))
-        time.sleep(10)
+        time.sleep(1)
     pool.shutdown()
     redis_client.set(affiliate_center_crawl_status, 0)

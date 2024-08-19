@@ -327,7 +327,7 @@ if __name__ == "__main__":
             thread2 = pool.submit(get_tiktok_user_data, result_data[ranges_for[1][0]:ranges_for[1][1]])
             insertUtils.insert_data(thread1.result(), result_data[ranges_for[0][0]:ranges_for[0][1]])
             insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
-        logging.logger.info("爬取数据完成,查找关键词:" + str(enum))
+        logging.logger.info("爬取数据完成,查找关键词:" + str(enum[1], encoding='utf-8'))
         time.sleep(1)
         insertUtils.updateSearchKey(enum)
     pool.shutdown()

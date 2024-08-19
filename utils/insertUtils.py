@@ -131,4 +131,4 @@ def insert_data(data, unique_id_list):
                     logging.logger.error(handle + "出错!")
                     logging.logger.error(ex)
         finally:
-            redisLock.acquire_lock(lock)
+            redisLock.release_lock(RedisKeyConstants.lock_insert_data,lock)

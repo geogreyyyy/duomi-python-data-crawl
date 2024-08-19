@@ -9,6 +9,7 @@ import redis
 import log
 import argparse
 from utils import insertUtils
+from utils import redisLock
 from concurrent.futures import ThreadPoolExecutor
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
@@ -229,7 +230,7 @@ def get_tiktok_shop_user_unique_id():
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': "_m4b_theme_=new; ttwid=1%7CWY10qyVMs80go2MdtZVwSytQkR37dhEizAb_CLD46X4%7C1723184153%7C773c06f433e91aa249239a2abc36dc3b9fc8399766178dbc06282c907a98a525; passport_csrf_token=729c78acabcfa323946872836c145adb; passport_csrf_token_default=729c78acabcfa323946872836c145adb; d_ticket=1fdfaa6bde6903c318c1d9fd449ce3730c964; odin_tt=eb9c913b0311e2035f34dc9d52bfbf25e053d63f43498e884611e33123b513a81c87917797a7d64197f42579a28652146a283443cf79a8c68269150ec511c005; sid_guard=521cca221e2e7936ac8cd1d53e05b6e7%7C1723184210%7C864000%7CMon%2C+19-Aug-2024+06%3A16%3A50+GMT; uid_tt=c993d652af42b7810eb2fd83d9268874269157d3fcf27e11f5c2e9e47040bb9c; uid_tt_ss=c993d652af42b7810eb2fd83d9268874269157d3fcf27e11f5c2e9e47040bb9c; sid_tt=521cca221e2e7936ac8cd1d53e05b6e7; sessionid=521cca221e2e7936ac8cd1d53e05b6e7; sessionid_ss=521cca221e2e7936ac8cd1d53e05b6e7; sid_ucp_v1=1.0.0-KDUyZDQyM2I4MGNlNDUzZGQyMjIwNmQ0N2M1YTI4MzQ5NDIwYmE4NmYKIAiCiLDOj6WSoWUQ0ujWtQYYnDMgDDDCkomqBjgBQOsHEAMaA215MiIgNTIxY2NhMjIxZTJlNzkzNmFjOGNkMWQ1M2UwNWI2ZTc; ssid_ucp_v1=1.0.0-KDUyZDQyM2I4MGNlNDUzZGQyMjIwNmQ0N2M1YTI4MzQ5NDIwYmE4NmYKIAiCiLDOj6WSoWUQ0ujWtQYYnDMgDDDCkomqBjgBQOsHEAMaA215MiIgNTIxY2NhMjIxZTJlNzkzNmFjOGNkMWQ1M2UwNWI2ZTc; msToken=hmrWZT6tV9I1FZHPJl0P7zlpAR4zVNQ4tWG6a5AOTF6VBTkzsj2YKs7_poPlRmfaMbIYkc3xNtBKR09XF5cb6fvQEuSqHpJMbX8D66pWnH-As89KGFinYrt9_g0=; i18next=zh-CN; s_v_web_id=verify_lzmbhmry_Y2WKlvR1_8Oh0_4WTA_Br6T_JIW6yUBo8eMV; user_oec_info=0a53014eb93e0e8e6ce6b78051919d8e67d6ef8ba1847ba2f6702f96d2bb20891513e7add30fc2667437c488ee2a8bc19b5ddb6ecdca4a05777e481f5d1b349c04a01be94a3ee8ad45f2e0de28b2023096616da7771a490a3c7a3f9b86a1b37cac1d92c0199a303bcfb23880d763ee3291e0c07fa5a99cb0924eb28f7eca5a92043fbfd689f06aae6ef231284c52146cd396cea30010e9f3d80d1886d2f6f20d2201046e951c42",
+        'cookie': "729c78acabcfa323946872836c145adb; passport_csrf_token_default=729c78acabcfa323946872836c145adb; d_ticket=1fdfaa6bde6903c318c1d9fd449ce3730c964; i18next=zh-CN; s_v_web_id=verify_lzmbhmry_Y2WKlvR1_8Oh0_4WTA_Br6T_JIW6yUBo8eMV; _m4b_theme_=new; ttwid=1%7CWY10qyVMs80go2MdtZVwSytQkR37dhEizAb_CLD46X4%7C1724060639%7C9960ff9963bfc77f3238e26e747f4d2a9462a5313120840db214502498b00fc9; odin_tt=a53d9061bee467ced492b9a65c111069fe7086088d580c636ed4a48a11ed490aa13af65852ce575dc850b890cfd6124f729495240e092fd1d9bf21c57bd29cee; sid_guard=f331fa98f361e9609aede6185bba1051%7C1724060717%7C864000%7CThu%2C+29-Aug-2024+09%3A45%3A17+GMT; uid_tt=4a712f133369997044e825a15c44ec1844ca10d87c98422e36a5bdafcff66b12; uid_tt_ss=4a712f133369997044e825a15c44ec1844ca10d87c98422e36a5bdafcff66b12; sid_tt=f331fa98f361e9609aede6185bba1051; sessionid=f331fa98f361e9609aede6185bba1051; sessionid_ss=f331fa98f361e9609aede6185bba1051; sid_ucp_v1=1.0.0-KGQzYTUwYWJjNzBjMTEzMTcyZDliMzNkN2VkMjhiZTAzMWYzOWEzZDYKIAiCiLDOj6WSoWUQraiMtgYYnDMgDDDCkomqBjgBQOsHEAMaA215MiIgZjMzMWZhOThmMzYxZTk2MDlhZWRlNjE4NWJiYTEwNTE; ssid_ucp_v1=1.0.0-KGQzYTUwYWJjNzBjMTEzMTcyZDliMzNkN2VkMjhiZTAzMWYzOWEzZDYKIAiCiLDOj6WSoWUQraiMtgYYnDMgDDDCkomqBjgBQOsHEAMaA215MiIgZjMzMWZhOThmMzYxZTk2MDlhZWRlNjE4NWJiYTEwNTE; msToken=M2cGZzSxWvgdA0Rp6iLasX7EAISb6vOJPc5F08-0hndHimWn1eTWeas_JBrmu_3w5dKtdE32Z77QIbUkFemFAU68TjTGSpt8NkGPL-IpXmbpo65IDCrHrTfInfKCrHtJVpIe; user_oec_info=0a5396efb4924a7e72b91e2fe0c71e3d481d4aa460ab33276570461ac6e3e10e628bedb2dc51c61b9f3c04b86f381fbdd8d0c961cd3b209423ac2ec0b5d1913a2057c8456f955f39ad964793c8ca1e87fdadf670581a490a3ce12c2a6da442e86cbe02f0879a6e63d719a40cc3065b04e1c3f84334d1e06ef0f9ad50247e5f622fe4841037deaf91f03932a1f07aec2cecbbbc237f10f4e5d90d1886d2f6f20d22010465773ce2",
         'priority': 'u=1, i',
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
@@ -272,24 +273,19 @@ def get_tiktok_shop_user_unique_id():
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
-# a-z aa-az aaa-aaz
-def print_extended_alphabet_2():
-    search_data = []
-    for char1 in range(ord('a'), ord('z') + 1):
-        search_data.append(str(chr(char1)))
-        for char2 in range(ord('a'), ord('z') + 1):
-            search_data.append(str(chr(char1) + chr(char2)))
-            for char3 in range(ord('a'), ord('z') + 1):
-                for char4 in range(ord('a'), ord('z') + 1):
-                    search_data.append(str(chr(char1) + chr(char2) + chr(char3) + chr(char4)))
-    return search_data
-
-
 if __name__ == "__main__":
-    enums_request = print_extended_alphabet_2()
     page = args.page
-    redis_client.set(affiliate_center_crawl_status, 1)
-    for enum in enums_request:
+    while True:
+        redis_client.set(affiliate_center_crawl_status, 1)
+        lock = redisLock.acquire_lock(RedisKeyConstants.lock_search_key)
+        enum = None
+        if lock:
+            enum = redis_client.blpop(RedisKeyConstants.data_crawl_search_key)
+        redisLock.release_lock(RedisKeyConstants.lock_search_key, lock)
+        if enum is None:
+            redis_client.set(affiliate_center_crawl_status, 0)
+            time.sleep(10)
+            continue
         # redis状态初始化
         redis_client.set(redis_key_error_num, 0)
         redis_client.set(redis_key_response_num, 0)
@@ -304,7 +300,7 @@ if __name__ == "__main__":
             },
             "filter_params": {},
             "algorithm": 1,
-            "query": str(enum),
+            "query": str(enum[1], encoding='utf-8'),
             "query_type": 1
         }
         # 开始计时

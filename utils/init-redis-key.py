@@ -1,7 +1,6 @@
 import redis
 from MySqlCon import Mysql
 import sys
-import log
 import json
 import numpy as np
 
@@ -11,29 +10,88 @@ from config import Config
 
 redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
                            password=Config.REDIS_PASSWORD)
-pipe = redis_client.pipeline()
-redis_user_info_key = RedisKeyConstants.redis_user_info_key
-
-mysql = Mysql()
-sql = "SELECT id,unique_id,signature FROM tiktok_user_info"
-
-# 列表中存在key则删除
-has_key = redis_client.keys(pattern=redis_user_info_key + "*")
-if len(has_key) != 0:
-    redis_client.delete(*redis_client.keys(redis_user_info_key + "*"))
 
 
-class MyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, bytes):
-            return str(obj, encoding='utf-8')
-        return json.JSONEncoder.default(self, obj)
+def init_unique_id():
+    pipe = redis_client.pipeline()
+    redis_user_info_key = RedisKeyConstants.redis_user_info_key
+
+    mysql = Mysql()
+    sql = "SELECT id,unique_id,signature FROM tiktok_user_info"
+
+    # 列表中存在key则删除
+    has_key = redis_client.keys(pattern=redis_user_info_key + "*")
+    if len(has_key) != 0:
+        redis_client.delete(*redis_client.keys(redis_user_info_key + "*"))
+
+    class MyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, bytes):
+                return str(obj, encoding='utf-8')
+            return json.JSONEncoder.default(self, obj)
+
+    result = mysql.getAll(sql)
+    for item in result:
+        uniqueId = str(item.get("unique_id"))
+        pipe.set(redis_user_info_key + uniqueId, json.dumps(item, cls=MyEncoder, indent=4))
+    pipe.execute()
 
 
-result = mysql.getAll(sql)
-for item in result:
-    uniqueId = str(item.get("unique_id"))
-    pipe.set(redis_user_info_key + uniqueId, json.dumps(item, cls=MyEncoder, indent=4))
-pipe.execute()
+insert_sql = """
+    insert into search_key(id,search_key,state) Values(%(id)s,%(search_key)s,%(state)s)
+"""
+
+
+def insert_search_key_sql():
+    mysql = Mysql()
+    search_data = []
+    for char1 in range(ord('a'), ord('z') + 1):
+        search_data.append({"id": str(chr(char1)), "search_key": str(chr(char1)), "state": 1, })
+        for char2 in range(ord('a'), ord('z') + 1):
+            search_data.append(
+                {"id": str(chr(char1) + chr(char2)), "search_key": str(chr(char1) + chr(char2)), "state": 1, })
+            for char3 in range(ord('a'), ord('z') + 1):
+                search_data.append(
+                    {"id": str(chr(char1) + chr(char2) + chr(char3)),
+                     "search_key": str(chr(char1) + chr(char2) + chr(char3)), "state": 1, })
+                for char4 in range(ord('a'), ord('z') + 1):
+                    search_data.append(
+                        {"id": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
+                         "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)), "state": 1, })
+    for char1 in range(ord('0'), ord('9') + 1):
+        search_data.append({"id": str(chr(char1)), "search_key": str(chr(char1)), "state": 1, })
+        for char2 in range(ord('0'), ord('9') + 1):
+            search_data.append(
+                {"id": str(chr(char1) + chr(char2)), "search_key": str(chr(char1) + chr(char2)), "state": 1, })
+            for char3 in range(ord('0'), ord('9') + 1):
+                search_data.append(
+                    {"id": str(chr(char1) + chr(char2) + chr(char3)),
+                     "search_key": str(chr(char1) + chr(char2) + chr(char3)), "state": 1, })
+                for char4 in range(ord('0'), ord('9') + 1):
+                    search_data.append(
+                        {"id": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
+                         "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)), "state": 1, })
+    mysql.insertMany(insert_sql, search_data)
+    mysql.dispose()
+    return search_data
+
+
+def init_redis_search_key():
+    mysql = Mysql()
+    result = mysql.getAll("select search_key from search_key where state = 1")
+    key_list = []
+    redis_client.delete(RedisKeyConstants.data_crawl_search_key)
+    for item in result:
+        key_list.append(item["search_key"])
+        redis_client.lpush(RedisKeyConstants.data_crawl_search_key, item["search_key"])
+
+
+    print(key_list)
+
+
+if __name__ == '__main__':
+    # init_unique_id()
+    aa = init_redis_search_key()
+    # print(aa)

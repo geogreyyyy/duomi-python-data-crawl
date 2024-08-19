@@ -9,6 +9,7 @@ import redis
 import log
 import argparse
 from utils import insertUtils
+from utils import redisLock
 from concurrent.futures import ThreadPoolExecutor
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
@@ -272,25 +273,19 @@ def get_tiktok_shop_user_unique_id():
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
-# a-z aa-az aaa-aaz
-def print_extended_alphabet_2():
-    search_data = []
-    for char1 in range(ord('0'), ord('9') + 1):
-        search_data.append(str(chr(char1)))
-        for char2 in range(ord('0'), ord('9') + 1):
-            search_data.append(str(chr(char1) + chr(char2)))
-            for char3 in range(ord('0'), ord('9') + 1):
-                for char4 in range(ord('0'), ord('9') + 1):
-                    search_data.append(str(chr(char1) + chr(char2) + chr(char3) + chr(char4)))
-    search_data.reverse()
-    return search_data
-
-
 if __name__ == "__main__":
-    enums_request = print_extended_alphabet_2()
     page = args.page
-    redis_client.set(affiliate_center_crawl_status, 1)
-    for enum in enums_request:
+    while True:
+        redis_client.set(affiliate_center_crawl_status, 1)
+        lock = redisLock.acquire_lock(RedisKeyConstants.lock_search_key)
+        enum = None
+        if lock:
+            enum = redis_client.blpop(RedisKeyConstants.data_crawl_search_key)
+        redisLock.release_lock(RedisKeyConstants.lock_search_key, lock)
+        if enum is None:
+            redis_client.set(affiliate_center_crawl_status, 0)
+            time.sleep(10)
+            continue
         # redis状态初始化
         redis_client.set(redis_key_error_num, 0)
         redis_client.set(redis_key_response_num, 0)
@@ -334,5 +329,6 @@ if __name__ == "__main__":
             insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
         logging.logger.info("爬取数据完成,查找关键词:" + str(enum))
         time.sleep(1)
+        insertUtils.updateSearchKey(enum)
     pool.shutdown()
     redis_client.set(affiliate_center_crawl_status, 0)

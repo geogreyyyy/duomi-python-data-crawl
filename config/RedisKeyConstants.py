@@ -12,7 +12,9 @@ redis_key_tiktok_shop_num = redis_key_name + "_tiktok_num"
 
 redis_user_info_key = "tiktok_user_info:"
 
+data_crawl_search_key = "data_crawl_search_key"
 # -----------------redis lock -----------------------
 redis_lock_name = redis_key_name + "_redis_lock:"
 redis_lock_create_table = redis_lock_name+"create_table"
 lock_insert_data = redis_lock_name+"lock_insert_data"
+lock_search_key = redis_key_name+"_lock_search_key"

@@ -136,5 +136,5 @@ def insert_data(data, unique_id_list):
 
 def updateSearchKey(search_key):
     mysql = Mysql()
-    mysql.update("update search_key set state = 3 where id = " + search_key)
+    mysql.update("update search_key set state = 3 where id = " + str(search_key))
     mysql.dispose()

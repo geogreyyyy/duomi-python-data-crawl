@@ -286,49 +286,54 @@ if __name__ == "__main__":
             redis_client.set(affiliate_center_crawl_status, 0)
             time.sleep(10)
             continue
-        # redis状态初始化
-        redis_client.set(redis_key_error_num, 0)
-        redis_client.set(redis_key_response_num, 0)
-        redis_client.set(redis_key_tik_tok_request_error_num, 0)
-        redis_client.set(redis_key_tiktok_shop_num, 0)
-        # 初始化请求
-        tiktok_shop_request_enable = True
-        tiktok_shop_pagination = {
-            "pagination": {
-                "size": 12,
-                "page": 0
-            },
-            "filter_params": {},
-            "algorithm": 1,
-            "query": str(enum[1], encoding='utf-8'),
-            "query_type": 1
-        }
-        # 开始计时
-        t = time.time()
-        # 处理数据爬虫
-        user_list = []
-        # 轮询分页
-        while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
-            try:
-                rsp_data = get_tiktok_shop_user_unique_id()
-                tiktok_shop_request_enable = rsp_data[1]
-                user_list.extend(rsp_data[0])
-            except Exception as ex:
-                logging.logger.error(ex)
-            # redis_client.set("test-unused-data", json.dumps(user_list))
-        logging.logger.info(tiktok_shop_pagination)
-        # 分批次爬取和写入
-        thread_num = 8
-        ranges = paginate_user_id_list(len(user_list), thread_num)
-        for num in range(thread_num):
-            result_data = user_list[ranges[num][0]:ranges[num][1]]
-            ranges_for = paginate_user_id_list(len(result_data), 2)  # 再次细分线程2个
-            thread1 = pool.submit(get_tiktok_user_data, result_data[ranges_for[0][0]:ranges_for[0][1]])
-            thread2 = pool.submit(get_tiktok_user_data, result_data[ranges_for[1][0]:ranges_for[1][1]])
-            insertUtils.insert_data(thread1.result(), result_data[ranges_for[0][0]:ranges_for[0][1]])
-            insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
-        logging.logger.info("爬取数据完成,查找关键词:" + str(enum[1], encoding='utf-8'))
-        time.sleep(1)
-        insertUtils.updateSearchKey(enum)
+        try:
+            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), 2)
+            # redis状态初始化
+            redis_client.set(redis_key_error_num, 0)
+            redis_client.set(redis_key_response_num, 0)
+            redis_client.set(redis_key_tik_tok_request_error_num, 0)
+            redis_client.set(redis_key_tiktok_shop_num, 0)
+            # 初始化请求
+            tiktok_shop_request_enable = True
+            tiktok_shop_pagination = {
+                "pagination": {
+                    "size": 12,
+                    "page": 0
+                },
+                "filter_params": {},
+                "algorithm": 1,
+                "query": str(enum[1], encoding='utf-8'),
+                "query_type": 1
+            }
+            # 开始计时
+            t = time.time()
+            # 处理数据爬虫
+            user_list = []
+            # 轮询分页
+            while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
+                try:
+                    rsp_data = get_tiktok_shop_user_unique_id()
+                    tiktok_shop_request_enable = rsp_data[1]
+                    user_list.extend(rsp_data[0])
+                except Exception as ex:
+                    logging.logger.error(ex)
+                # redis_client.set("test-unused-data", json.dumps(user_list))
+            logging.logger.info(tiktok_shop_pagination)
+            # 分批次爬取和写入
+            thread_num = 8
+            ranges = paginate_user_id_list(len(user_list), thread_num)
+            for num in range(thread_num):
+                result_data = user_list[ranges[num][0]:ranges[num][1]]
+                ranges_for = paginate_user_id_list(len(result_data), 2)  # 再次细分线程2个
+                thread1 = pool.submit(get_tiktok_user_data, result_data[ranges_for[0][0]:ranges_for[0][1]])
+                thread2 = pool.submit(get_tiktok_user_data, result_data[ranges_for[1][0]:ranges_for[1][1]])
+                insertUtils.insert_data(thread1.result(), result_data[ranges_for[0][0]:ranges_for[0][1]])
+                insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
+            logging.logger.info("爬取数据完成,查找关键词:" + str(enum[1], encoding='utf-8'))
+            time.sleep(1)
+            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), 3)
+        except Exception as ex:
+            logging.logger.error(ex)
+            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), 4)
     pool.shutdown()
     redis_client.set(affiliate_center_crawl_status, 0)

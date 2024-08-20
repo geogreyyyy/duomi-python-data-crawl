@@ -134,7 +134,7 @@ def insert_data(data, unique_id_list):
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
 
 
-def updateSearchKey(search_key):
+def updateSearchKey(search_key, state):
     mysql = Mysql()
-    mysql.update("update search_key set state = 3 where id = " + str(search_key))
+    mysql.update("update search_key set state = %s where id = %s", [state, str(search_key)])
     mysql.dispose()

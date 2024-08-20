@@ -52,6 +52,8 @@ def insert_creator_user(data, redis_stats_id):
 
     except Exception as ex:
         mysql.dispose(isEnd=0)
+        logging.logger.error(ex)
+        logging.logger.error(creator_user)
         raise Exception(ex)
 
     user_info = data["user_data"]
@@ -70,6 +72,8 @@ def insert_creator_user(data, redis_stats_id):
             mysql.insertOne(user_info_insert_sql, user_info)
     except Exception as ex:
         mysql.dispose(isEnd=0)
+        logging.logger.error(ex)
+        logging.logger.error(user_info)
         raise Exception(ex)
 
     user_stats = data["user_stats"]
@@ -90,6 +94,8 @@ def insert_creator_user(data, redis_stats_id):
             mysql.insertOne(user_stats_insert_sql, user_stats)
     except Exception as ex:
         mysql.dispose(isEnd=0)
+        logging.logger.error(ex)
+        logging.logger.error(user_stats)
         raise Exception(ex)
     mysql.dispose()
 

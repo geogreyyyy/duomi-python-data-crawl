@@ -78,7 +78,7 @@ def set_user_info(user_data, user_stats, create_user_info):
             resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
             resp_data_user_data["region"] = user_data.get('region')
             resp_data_user_data["sec_uid"] = user_data.get('secUid')
-            resp_data_user_data["bio_link"] = user_data.get('bioLink')
+            resp_data_user_data["bio_link"] = str(user_data.get('bioLink'))
             # create_user_info
             resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid')["value"]
             resp_data_creator_data["user_id"] = user_data.get('id')

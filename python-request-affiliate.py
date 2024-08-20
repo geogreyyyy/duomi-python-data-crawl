@@ -286,8 +286,8 @@ if __name__ == "__main__":
             redis_client.set(affiliate_center_crawl_status, 0)
             time.sleep(10)
             continue
+        state = 2
         try:
-            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), 2)
             # redis状态初始化
             redis_client.set(redis_key_error_num, 0)
             redis_client.set(redis_key_response_num, 0)
@@ -331,9 +331,11 @@ if __name__ == "__main__":
                 insertUtils.insert_data(thread2.result(), result_data[ranges_for[1][0]:ranges_for[1][1]])
             logging.logger.info("爬取数据完成,查找关键词:" + str(enum[1], encoding='utf-8'))
             time.sleep(1)
-            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), 3)
+            state = 3
         except Exception as ex:
             logging.logger.error(ex)
-            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), 4)
+            state = 4
+        finally:
+            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), state)
     pool.shutdown()
     redis_client.set(affiliate_center_crawl_status, 0)

@@ -209,12 +209,12 @@ def paginate_user_id_list(total, N):
 
 # 从tiktok shop平台获取unique id列表
 def get_tiktok_shop_user_unique_id():
-    url = ("https://affiliate.tiktokglobalshop.com/api/v1/oec/affiliate/creator/marketplace/find?"
+    url = ("https://affiliate-us.tiktok.com/api/v1/oec/affiliate/creator/marketplace/find?"
            "user_language=zh-CN"
-           "&aid=6556"
+           "&aid=4331"
            "&app_name=i18n_ecom_alliance"
            "&device_id=0"
-           "&fp=verify_m023nbmc_FVYYO3Zd_1o9r_4MYU_9LaQ_KFhnulwPmpzB"
+           "&fp=verify_m023xkv5_dqlk3jVd_d2YM_4ICJ_9fOd_esDgfPNshxuL"
            "&device_platform=web"
            "&cookie_enabled=true"
            "&screen_width=1920"
@@ -225,17 +225,18 @@ def get_tiktok_shop_user_unique_id():
            "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F127.0.0.0+Safari%2F537.36"
            "&browser_online=true"
            "&timezone_name=Asia%2FShanghai"
-           "&oec_seller_id=7495391450561284865"
+           "&oec_seller_id=7495851717600643812"
            "&shop_region=US"
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': "_m4b_theme_=new; passport_csrf_token=80ce0e9dbadfbd6bf8327b15a6390147; passport_csrf_token_default=80ce0e9dbadfbd6bf8327b15a6390147; d_ticket=cea6b6b7ea3f60300f71c6c0a3d784172a3c8; odin_tt=cd911dfcdcb06424dc50715c1e468adb0e94bacc8a0e61b80189da751b02ccc7fbda491c8ab9433bc468a592e8016221e0b6dc7224cc5f545e745f3ecc306e2b; sid_guard=f8263c5540f3d396400319f778462364%7C1724138581%7C864000%7CFri%2C+30-Aug-2024+07%3A23%3A01+GMT; uid_tt=a37275cc2c07821566ed3d85268d28a27108e19026bb9ca7d5ecf72dc3d60652; uid_tt_ss=a37275cc2c07821566ed3d85268d28a27108e19026bb9ca7d5ecf72dc3d60652; sid_tt=f8263c5540f3d396400319f778462364; sessionid=f8263c5540f3d396400319f778462364; sessionid_ss=f8263c5540f3d396400319f778462364; sid_ucp_v1=1.0.0-KDk2NDk2MTM4NWY4YThlNmEwNjVhMzZjZjYzMWVkMTMxMGYyMzAxMTIKIAiCiI3KluDnqGUQ1YiRtgYYnDMgDDCnvsaqBjgBQOsHEAMaA3NnMSIgZjgyNjNjNTU0MGYzZDM5NjQwMDMxOWY3Nzg0NjIzNjQ; ssid_ucp_v1=1.0.0-KDk2NDk2MTM4NWY4YThlNmEwNjVhMzZjZjYzMWVkMTMxMGYyMzAxMTIKIAiCiI3KluDnqGUQ1YiRtgYYnDMgDDCnvsaqBjgBQOsHEAMaA3NnMSIgZjgyNjNjNTU0MGYzZDM5NjQwMDMxOWY3Nzg0NjIzNjQ; msToken=_-xkN-CXb4PAkxrymYMPYdSRSiOHe8ji5cdmpuunVKvB736L5h1AfH59Wd7qKTuDCYRqK6cNOC8FqZA9N-YQd6Jq-RYu97OYBNvafMdJ6Y62OdA3KQYSq61s9z3yjRQHel3j; ttwid=1%7CHvbbVFAPZdLGBsUuJWxfMwUjUdKv1dgvo_M9ML0fCWE%7C1724138598%7Cb6033eb1c3bf83fc85f5a54bf709b41028b8a1a5411033d59ddd2cd1e5512fc3; i18next=zh-CN; user_oec_info=0a53bb5afc872568b5a330d9b8c98e7c7d52df67111a692ef3fb887a08023d1880a8c34d7a854db3cfb46a43844fc9017deca3e5342c0a5565f23536088f04e2c6052705faa7a155e54fa51211e5167a29c24f77d11a490a3c1b291240d4ed55a9ffd43f77b10dc8cca949716f69020ad4ff0df713e381b22d868e279661c3dbfd69fb9c9f868074f06f3ad9f785a5b47805890df51094f1d90d1886d2f6f20d220104a4f10a2e; s_v_web_id=verify_m023nbmc_FVYYO3Zd_1o9r_4MYU_9LaQ_KFhnulwPmpzB",
+        'accept': 'application/json, text/plain, */*',
+        'cookie': "_ga=GA1.1.2017787004.1717412342; _ttp=2hMmVGp5N733yHWxjeeEOwQvZqh; _fbp=fb.1.1717412348927.2076271040; _ga_W44EJN0C49=GS1.1.1718354830.1.1.1718357356.0.0.0; tt_chain_token=swi2RjUX93vD8yJ8sqLVbg==; _m4b_theme_=new; ttwid=1%7CL4i8Yytq2XhFaLGR_1-A65pLMcOqB5PVrFdPlZ75Lx8%7C1724138813%7C19ade38df32b1caca73f5ee123b82f49e1a7adc19332a4572f173a90315e1908; passport_csrf_token=c2d5057396a9614e8871b87208d01789; passport_csrf_token_default=c2d5057396a9614e8871b87208d01789; _uetsid=90a6b4a05ec511efaf9ef9c26c973e3f; _uetvid=4b7f65103f3111ef961529bc3bbaad27; d_ticket_ads=9d4ae23f006c0ed094c960eaf6acc5ce9e302; passport_auth_status_ads=63d4745e72f120a54773776904934584%2C; passport_auth_status_ss_ads=63d4745e72f120a54773776904934584%2C; sso_auth_status_ads=e85fcac1c3d4bfc9e77c03a1105e1b29; sso_auth_status_ss_ads=e85fcac1c3d4bfc9e77c03a1105e1b29; sso_uid_tt_ads=8cb55a362804f934ce4e2672f0f66ea848dbb2ab11c03d2abf8af2f4acee88d4; sso_uid_tt_ss_ads=8cb55a362804f934ce4e2672f0f66ea848dbb2ab11c03d2abf8af2f4acee88d4; sso_user_ads=6ddfb62e76668c83358c6b348d4689d6; sso_user_ss_ads=6ddfb62e76668c83358c6b348d4689d6; sid_ucp_sso_v1_ads=1.0.0-KGMxOTJlNjkyMjgxYWY1MjdiZjJkMDMwZjJiZmE2Mzc5NTE0YzQ2Y2EKIAiBiJqMyNz1zmYQ4IyRtgYY5B8gDDCfrve0BjgCQPEHEAMaA3NnMSIgNmRkZmI2MmU3NjY2OGM4MzM1OGM2YjM0OGQ0Njg5ZDY; ssid_ucp_sso_v1_ads=1.0.0-KGMxOTJlNjkyMjgxYWY1MjdiZjJkMDMwZjJiZmE2Mzc5NTE0YzQ2Y2EKIAiBiJqMyNz1zmYQ4IyRtgYY5B8gDDCfrve0BjgCQPEHEAMaA3NnMSIgNmRkZmI2MmU3NjY2OGM4MzM1OGM2YjM0OGQ0Njg5ZDY; sid_guard_tiktokseller=ca98c20ab85f60f5fae290c5283d2f61%7C1724139105%7C863999%7CFri%2C+30-Aug-2024+07%3A31%3A44+GMT; uid_tt_tiktokseller=7006d75cdcce5c328c62e101acfdf31d18a425430e298994d74fc232c6268d9e; uid_tt_ss_tiktokseller=7006d75cdcce5c328c62e101acfdf31d18a425430e298994d74fc232c6268d9e; sid_tt_tiktokseller=ca98c20ab85f60f5fae290c5283d2f61; sessionid_tiktokseller=ca98c20ab85f60f5fae290c5283d2f61; sessionid_ss_tiktokseller=ca98c20ab85f60f5fae290c5283d2f61; sid_ucp_v1_tiktokseller=1.0.0-KDdhMzNjMzMxYTQxNmY1NjM5NjhkMzNlOTVmZjEwMGNjZGQ3OTYwOTcKGgiBiJqMyNz1zmYQ4YyRtgYY5B8gDDgCQPEHEAMaA3NnMSIgY2E5OGMyMGFiODVmNjBmNWZhZTI5MGM1MjgzZDJmNjE; ssid_ucp_v1_tiktokseller=1.0.0-KDdhMzNjMzMxYTQxNmY1NjM5NjhkMzNlOTVmZjEwMGNjZGQ3OTYwOTcKGgiBiJqMyNz1zmYQ4YyRtgYY5B8gDDgCQPEHEAMaA3NnMSIgY2E5OGMyMGFiODVmNjBmNWZhZTI5MGM1MjgzZDJmNjE; msToken=vdTUTFpB3sAnn2tAjuMrwznebgZLqNCXs-Qmrsy32_H7ANrV0iRzt59_94iovO4PF1gCgR7D5bCpfBrEb_ZArjdLF2WeXZP-KAYBGPm8jryxiYG5QNPeg66ZOg_jkH0o2elb7AyLHuOIbmRy9sIZD0c=; _ga_BZBQ2QHQSP=GS1.1.1724138806.19.1.1724139107.0.0.105043562; SELLER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOjczOTQzMDI0NDAxMjYxODY0OTcsIk9lY1VpZCI6NzQ5NTg1MTcxNzYwMDY0MzgxMiwiT2VjU2hvcElkIjo3NDk1ODUxNzE3NjAwNjQzODEyLCJTaG9wUmVnaW9uIjoiIiwiR2xvYmFsU2VsbGVySWQiOjc0OTU4NTE3MTc2MDA2NDM4MTIsIlNlbGxlcklkIjo3NDk1ODUxNzE3NjAwNjQzODEyLCJleHAiOjE3MjQyMjU1MTksIm5iZiI6MTcyNDEzODExOX0.kXSmTpWnePVR2oXc1WUO9AnQzyaFlgmz_hRoGlLsnXw; SHOP_ID=7394332989255386923; s_v_web_id=verify_m023xkv5_dqlk3jVd_d2YM_4ICJ_9fOd_esDgfPNshxuL; i18next=en; user_oec_info=0a53537ba17a2acbc5bebd5b5ed4dbaade86c4e1d3fb651c5947828ede8975a951cd3d341064e34019a966e81aa89456cdd190fa632b8be47609e6a40505553c1120413e0f011ee922d3aa5327fd174037121290581a490a3c9b7bf2b05d84b71bef0b857be27cb4a4a418f0dcc178b61920219680a6a2eb629baf5a3156acad8e562c3bc5cf64bb4f7593fb2757c55a5f7cf4e14610eaeed90d1886d2f6f20d2201048387b6ba; odin_tt=186e8aaad422377015bde73d6251afab1b1d7ff2884c41d176516ce445da53a5fa87e6a953ba37fd2275cce2f10cb8c1be4af167f2fd7650f7292a50748f8a56",
         'priority': 'u=1, i',
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "origin": "https://affiliate.tiktokglobalshop.com",
-        "referer": "https://affiliate.tiktokglobalshop.com/connection/creator?shop_region=US",
+        "origin": "https://affiliate-us.tiktok.com",
+        "referer": "https://affiliate-us.tiktok.com/connection/creator?shop_region=US",
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": "Windows",
         "sec-fetch-dest": "empty",

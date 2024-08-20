@@ -30,7 +30,10 @@ class Mysql(object):
                                      passwd=Config.DBPWD,
                                      db=Config.DBNAME,
                                      charset=Config.DBCHAR,
-                                     cursorclass=DictCursor)
+                                     cursorclass=DictCursor,
+                                     connect_timeout=60,
+                                     write_timeout=60,
+                                     read_timeout=60)
         self._cursor = self._conn.cursor()
 
     def getAll(self, sql, param=None):

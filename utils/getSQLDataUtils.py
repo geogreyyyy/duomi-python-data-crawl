@@ -11,3 +11,10 @@ def get_cookie(shop_id):
     result = mysql.getOne(sql, {"shop_id": shop_id})
 
     return result
+
+
+# 获取没有邮箱信息的创作者达人
+def get_not_info_create_user():
+    mysql = Mysql()
+    sql = """SELECT * FROM tiktok_creator_user_info WHERE user_id not in (select id from tiktok_user_info)"""
+

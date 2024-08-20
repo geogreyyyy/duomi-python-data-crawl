@@ -214,7 +214,7 @@ def get_tiktok_shop_user_unique_id():
            "&aid=6556"
            "&app_name=i18n_ecom_alliance"
            "&device_id=0"
-           "&fp=verify_lzmbhmry_Y2WKlvR1_8Oh0_4WTA_Br6T_JIW6yUBo8eMV"
+           "&fp=verify_m023nbmc_FVYYO3Zd_1o9r_4MYU_9LaQ_KFhnulwPmpzB"
            "&device_platform=web"
            "&cookie_enabled=true"
            "&screen_width=1920"
@@ -225,17 +225,17 @@ def get_tiktok_shop_user_unique_id():
            "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F127.0.0.0+Safari%2F537.36"
            "&browser_online=true"
            "&timezone_name=Asia%2FShanghai"
-           "&oec_seller_id=7495378371744074024"
+           "&oec_seller_id=7495391450561284865"
            "&shop_region=US"
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': "729c78acabcfa323946872836c145adb; passport_csrf_token_default=729c78acabcfa323946872836c145adb; d_ticket=1fdfaa6bde6903c318c1d9fd449ce3730c964; i18next=zh-CN; s_v_web_id=verify_lzmbhmry_Y2WKlvR1_8Oh0_4WTA_Br6T_JIW6yUBo8eMV; _m4b_theme_=new; ttwid=1%7CWY10qyVMs80go2MdtZVwSytQkR37dhEizAb_CLD46X4%7C1724060639%7C9960ff9963bfc77f3238e26e747f4d2a9462a5313120840db214502498b00fc9; odin_tt=a53d9061bee467ced492b9a65c111069fe7086088d580c636ed4a48a11ed490aa13af65852ce575dc850b890cfd6124f729495240e092fd1d9bf21c57bd29cee; sid_guard=f331fa98f361e9609aede6185bba1051%7C1724060717%7C864000%7CThu%2C+29-Aug-2024+09%3A45%3A17+GMT; uid_tt=4a712f133369997044e825a15c44ec1844ca10d87c98422e36a5bdafcff66b12; uid_tt_ss=4a712f133369997044e825a15c44ec1844ca10d87c98422e36a5bdafcff66b12; sid_tt=f331fa98f361e9609aede6185bba1051; sessionid=f331fa98f361e9609aede6185bba1051; sessionid_ss=f331fa98f361e9609aede6185bba1051; sid_ucp_v1=1.0.0-KGQzYTUwYWJjNzBjMTEzMTcyZDliMzNkN2VkMjhiZTAzMWYzOWEzZDYKIAiCiLDOj6WSoWUQraiMtgYYnDMgDDDCkomqBjgBQOsHEAMaA215MiIgZjMzMWZhOThmMzYxZTk2MDlhZWRlNjE4NWJiYTEwNTE; ssid_ucp_v1=1.0.0-KGQzYTUwYWJjNzBjMTEzMTcyZDliMzNkN2VkMjhiZTAzMWYzOWEzZDYKIAiCiLDOj6WSoWUQraiMtgYYnDMgDDDCkomqBjgBQOsHEAMaA215MiIgZjMzMWZhOThmMzYxZTk2MDlhZWRlNjE4NWJiYTEwNTE; msToken=M2cGZzSxWvgdA0Rp6iLasX7EAISb6vOJPc5F08-0hndHimWn1eTWeas_JBrmu_3w5dKtdE32Z77QIbUkFemFAU68TjTGSpt8NkGPL-IpXmbpo65IDCrHrTfInfKCrHtJVpIe; user_oec_info=0a5396efb4924a7e72b91e2fe0c71e3d481d4aa460ab33276570461ac6e3e10e628bedb2dc51c61b9f3c04b86f381fbdd8d0c961cd3b209423ac2ec0b5d1913a2057c8456f955f39ad964793c8ca1e87fdadf670581a490a3ce12c2a6da442e86cbe02f0879a6e63d719a40cc3065b04e1c3f84334d1e06ef0f9ad50247e5f622fe4841037deaf91f03932a1f07aec2cecbbbc237f10f4e5d90d1886d2f6f20d22010465773ce2",
+        'cookie': "_m4b_theme_=new; passport_csrf_token=80ce0e9dbadfbd6bf8327b15a6390147; passport_csrf_token_default=80ce0e9dbadfbd6bf8327b15a6390147; d_ticket=cea6b6b7ea3f60300f71c6c0a3d784172a3c8; odin_tt=cd911dfcdcb06424dc50715c1e468adb0e94bacc8a0e61b80189da751b02ccc7fbda491c8ab9433bc468a592e8016221e0b6dc7224cc5f545e745f3ecc306e2b; sid_guard=f8263c5540f3d396400319f778462364%7C1724138581%7C864000%7CFri%2C+30-Aug-2024+07%3A23%3A01+GMT; uid_tt=a37275cc2c07821566ed3d85268d28a27108e19026bb9ca7d5ecf72dc3d60652; uid_tt_ss=a37275cc2c07821566ed3d85268d28a27108e19026bb9ca7d5ecf72dc3d60652; sid_tt=f8263c5540f3d396400319f778462364; sessionid=f8263c5540f3d396400319f778462364; sessionid_ss=f8263c5540f3d396400319f778462364; sid_ucp_v1=1.0.0-KDk2NDk2MTM4NWY4YThlNmEwNjVhMzZjZjYzMWVkMTMxMGYyMzAxMTIKIAiCiI3KluDnqGUQ1YiRtgYYnDMgDDCnvsaqBjgBQOsHEAMaA3NnMSIgZjgyNjNjNTU0MGYzZDM5NjQwMDMxOWY3Nzg0NjIzNjQ; ssid_ucp_v1=1.0.0-KDk2NDk2MTM4NWY4YThlNmEwNjVhMzZjZjYzMWVkMTMxMGYyMzAxMTIKIAiCiI3KluDnqGUQ1YiRtgYYnDMgDDCnvsaqBjgBQOsHEAMaA3NnMSIgZjgyNjNjNTU0MGYzZDM5NjQwMDMxOWY3Nzg0NjIzNjQ; msToken=_-xkN-CXb4PAkxrymYMPYdSRSiOHe8ji5cdmpuunVKvB736L5h1AfH59Wd7qKTuDCYRqK6cNOC8FqZA9N-YQd6Jq-RYu97OYBNvafMdJ6Y62OdA3KQYSq61s9z3yjRQHel3j; ttwid=1%7CHvbbVFAPZdLGBsUuJWxfMwUjUdKv1dgvo_M9ML0fCWE%7C1724138598%7Cb6033eb1c3bf83fc85f5a54bf709b41028b8a1a5411033d59ddd2cd1e5512fc3; i18next=zh-CN; user_oec_info=0a53bb5afc872568b5a330d9b8c98e7c7d52df67111a692ef3fb887a08023d1880a8c34d7a854db3cfb46a43844fc9017deca3e5342c0a5565f23536088f04e2c6052705faa7a155e54fa51211e5167a29c24f77d11a490a3c1b291240d4ed55a9ffd43f77b10dc8cca949716f69020ad4ff0df713e381b22d868e279661c3dbfd69fb9c9f868074f06f3ad9f785a5b47805890df51094f1d90d1886d2f6f20d220104a4f10a2e; s_v_web_id=verify_m023nbmc_FVYYO3Zd_1o9r_4MYU_9LaQ_KFhnulwPmpzB",
         'priority': 'u=1, i',
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-        "origin": "https://affiliate-us.tiktok.com",
-        "referer": "https://affiliate-us.tiktok.com/connection/creator?source_from=seller_affiliate_landing&shop_region=US",
+        "origin": "https://affiliate.tiktokglobalshop.com",
+        "referer": "https://affiliate.tiktokglobalshop.com/connection/creator?shop_region=US",
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": "Windows",
         "sec-fetch-dest": "empty",

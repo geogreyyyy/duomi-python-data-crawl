@@ -50,7 +50,7 @@ logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level
 
 # 全局状态变量
 global tiktok_shop_request_enable
-global tiktok_shop_pagination
+global creator_marketplace_pagination
 
 
 # 设置用户属性
@@ -245,7 +245,7 @@ def get_tiktok_shop_user_unique_id():
     }
     logging.logger.info("请求url：" + url)
     try:
-        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=tiktok_shop_pagination, headers=headers,
+        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=creator_marketplace_pagination, headers=headers,
                                                              timeout=20)
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
@@ -270,7 +270,7 @@ def get_tiktok_shop_user_unique_id():
             "next_item_cursor": next_pagination.get("next_item_cursor"),
             "search_key": next_pagination.get("search_key")
         }
-        tiktok_shop_pagination["pagination"] = pagination
+        creator_marketplace_pagination["pagination"] = pagination
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
@@ -296,7 +296,7 @@ if __name__ == "__main__":
             redis_client.set(redis_key_tiktok_shop_num, 0)
             # 初始化请求
             tiktok_shop_request_enable = True
-            tiktok_shop_pagination = {
+            creator_marketplace_pagination = {
                 "pagination": {
                     "size": 12,
                     "page": 0
@@ -319,7 +319,7 @@ if __name__ == "__main__":
                 except Exception as ex:
                     logging.logger.error(ex)
                 # redis_client.set("test-unused-data", json.dumps(user_list))
-            logging.logger.info(tiktok_shop_pagination)
+            logging.logger.info(creator_marketplace_pagination)
             # 分批次爬取和写入
             thread_num = 8
             ranges = paginate_user_id_list(len(user_list), thread_num)

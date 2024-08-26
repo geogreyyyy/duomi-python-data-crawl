@@ -7,11 +7,17 @@ redis_key_error_num = redis_key_name + "_error_num"
 redis_key_response_num = redis_key_name + "_response_num"
 redis_key_tik_tok_request_error_num = redis_key_name + "_tik_tok_request_error_num"
 redis_key_tik_tok_request_wait_num = redis_key_name + "_tik_tok_request_wait_num"
+
+creator_marketplace_name = redis_key_name+"_creator_marketplace"
+creator_marketplace_error_num = creator_marketplace_name+"_error_num"
+creator_marketplace_response_num = creator_marketplace_name+"_response_num"
+creator_marketplace_page_num = creator_marketplace_name+"_page_num"
 # redis请求状态
 redis_key_tiktok_shop_num = redis_key_name + "_tiktok_num"
 
 redis_user_info_key = "tiktok_user_info:"
-
+# 数据到10W分表的key
+creator_new_table_key = "creator_new_table_key"
 data_crawl_search_key = "data_crawl_search_key"
 # -----------------redis lock -----------------------
 redis_lock_name = redis_key_name + "_redis_lock:"

@@ -55,7 +55,7 @@ logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level
 
 # 全局状态变量
 global tiktok_shop_request_enable
-global tiktok_shop_pagination
+global creator_marketplace_pagination
 
 
 # 设置用户属性
@@ -229,7 +229,7 @@ def get_tiktok_shop_user_unique_id():
     }
     logging.logger.info("请求url：" + url)
     try:
-        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=tiktok_shop_pagination, headers=headers)
+        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=creator_marketplace_pagination, headers=headers)
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
@@ -252,14 +252,14 @@ def get_tiktok_shop_user_unique_id():
             "next_item_cursor": next_pagination.get("next_item_cursor"),
             "search_key": next_pagination.get("search_key")
         }
-        tiktok_shop_pagination["pagination"] = pagination
+        creator_marketplace_pagination["pagination"] = pagination
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
 if __name__ == "__main__":
     # 初始化请求
     tiktok_shop_request_enable = True
-    tiktok_shop_pagination = {
+    creator_marketplace_pagination = {
         "pagination": {
             "size": 12,
             "page": 0
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         user_list.extend(rsp_data[0])
     # 固定8个线程
     ranges = paginate_user_id_list(len(user_list), 2)
-    print(tiktok_shop_pagination)
+    print(creator_marketplace_pagination)
 
     thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
     insertUtils.insert_data(thread1.result(), user_list[ranges[0][0]:ranges[0][1]])

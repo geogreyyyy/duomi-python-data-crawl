@@ -38,7 +38,7 @@ logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level
 
 # 全局状态变量
 global tiktok_shop_request_enable
-global tiktok_shop_pagination
+global creator_marketplace_pagination
 
 
 # 设置用户属性

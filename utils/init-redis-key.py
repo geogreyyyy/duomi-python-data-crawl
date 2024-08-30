@@ -73,22 +73,23 @@ def insert_search_key_sql():
                     search_data.append(
                         {"id": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
                          "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)), "state": 1, })
-    mysql.insertMany(insert_sql, search_data)
-    mysql.dispose()
+    # mysql.insertMany(insert_sql, search_data)
+    # mysql.dispose()
     return search_data
 
 
 def init_redis_search_key():
-    mysql = Mysql()
-    result = mysql.getAll("select search_key from search_key where state = 1")
-    key_list = []
-    redis_client.delete(RedisKeyConstants.data_crawl_search_key)
+    # mysql = Mysql()
+    # result = mysql.getAll("select search_key from search_key where state = 1")
+    result = insert_search_key_sql()
+    print(result)
+    # key_list = []
+    redis_client.delete(RedisKeyConstants.creator_marketplace_search_key)
+    r = redis_client.pipeline()
     for item in result:
-        key_list.append(item["search_key"])
-        redis_client.lpush(RedisKeyConstants.data_crawl_search_key, item["search_key"])
-
-
-    print(key_list)
+        # key_list.append(item["search_key"])
+        r.lpush(RedisKeyConstants.creator_marketplace_search_key, item["search_key"])
+    r.execute()
 
 
 if __name__ == '__main__':

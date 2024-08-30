@@ -12,6 +12,7 @@ creator_marketplace_name = redis_key_name+"_creator_marketplace"
 creator_marketplace_error_num = creator_marketplace_name+"_error_num"
 creator_marketplace_response_num = creator_marketplace_name+"_response_num"
 creator_marketplace_page_num = creator_marketplace_name+"_page_num"
+creator_marketplace_search_key = "creator_marketplace_search_key"
 # redis请求状态
 redis_key_tiktok_shop_num = redis_key_name + "_tiktok_num"
 
@@ -24,3 +25,4 @@ redis_lock_name = redis_key_name + "_redis_lock:"
 redis_lock_create_table = redis_lock_name+"create_table"
 lock_insert_data = redis_lock_name+"lock_insert_data"
 lock_search_key = redis_key_name+"_lock_search_key"
+lock_creator_marketplace_search_key = creator_marketplace_name+"_lock_search_key"

@@ -362,7 +362,7 @@ data_list = [
 
 def insert_data_creator_marketplace(data):
     if len(data) == 0:
-        return
+        return 0
     get_table_index(len(data))
     lock = redisLock.acquire_lock(RedisKeyConstants.lock_insert_data)
     no_insert_num = 0
@@ -382,4 +382,5 @@ def insert_data_creator_marketplace(data):
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     logging.logger.info(f"总共插入{len(data)}条数据，其中重复{no_insert_num}条")
+    return len(data) - no_insert_num
 # insert_data_creator_marketplace(data_list)

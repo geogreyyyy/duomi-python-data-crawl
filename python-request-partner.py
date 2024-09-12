@@ -12,6 +12,7 @@ import argparse
 from utils import insertUtils
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
+from utils import redisLock
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -19,17 +20,6 @@ otherStyleTime = time.strftime("%Y%m%d", timeArray)
 numStyleTime = time.strftime("%H%M%S", timeArray)
 time_default_range = str(otherStyleTime)
 
-parser = argparse.ArgumentParser(description='argparse into.')
-parser.add_argument('--page', '-p', type=str, default="50", required=True, help="请输入爬取的数量(50倍数抓取)")
-parser.add_argument('--categories', '-cate', type=str, default="", required=False, help="请输入爬取类型")
-parser.add_argument('--currency', '-cur', type=str, default="", required=False, help="输入地区")
-parser.add_argument('--region', '-re', type=str, default="", required=False, help="输入地区")
-parser.add_argument('--time-type', '-tt', type=str, default="daily", required=False, help="爬取类型daily:日榜 weekly:周榜 "
-                                                                                          "monthly:月榜")
-parser.add_argument('--time-range', '-tr', type=str, default=time_default_range, required=False, help="爬取类型daily:日榜 "
-                                                                                                      "weekly:周榜 "
-                                                                                                      "monthly:月榜")
-args = parser.parse_args()
 # 线程池初始化
 pool = ThreadPoolExecutor(max_workers=8)
 thread_num = 2
@@ -42,17 +32,15 @@ redis_key_error_num = RedisKeyConstants.redis_key_error_num
 redis_key_response_num = RedisKeyConstants.redis_key_response_num
 redis_key_tik_tok_request_error_num = RedisKeyConstants.redis_key_tik_tok_request_error_num
 # redis请求状态
-redis_key_tiktok_shop_num = RedisKeyConstants.redis_key_tiktok_shop_num
 
 # redis状态初始化
 redis_client.set(redis_key_error_num, 0)
 redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
-redis_client.set(redis_key_tiktok_shop_num, 0)
 
 # log初始化
 logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
-
+log_creator = log.Logger('tiktok-shop-partner.log', level='INFO')
 # 全局状态变量
 global tiktok_shop_request_enable
 global creator_marketplace_pagination
@@ -82,7 +70,7 @@ def set_user_info(user_data, user_stats, create_user_info):
             resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
             resp_data_user_data["region"] = user_data.get('region')
             resp_data_user_data["sec_uid"] = user_data.get('secUid')
-            resp_data_user_data["bio_link"] = user_data.get('bioLink')
+            resp_data_user_data["bio_link"] = json.dumps(user_data.get('bioLink'))
             # create_user_info
             resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid')["value"]
             resp_data_creator_data["user_id"] = user_data.get('id')
@@ -96,18 +84,19 @@ def set_user_info(user_data, user_stats, create_user_info):
             if create_user_info.get('med_gmv_revenue_range') is not None:
                 resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range')["value"]
             if create_user_info.get('creator_bind_mcn_name') is not None:
-                resp_data_creator_data["creator_bind_mcn_name"] = create_user_info.get('creator_bind_mcn_name')
+                resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(
+                    create_user_info.get('creator_bind_mcn_name'))
             if create_user_info.get('industry_groups') is not None:
-                resp_data_creator_data["industry_groups"] = create_user_info.get('industry_groups')
+                resp_data_creator_data["industry_groups"] = json.dumps(create_user_info.get('industry_groups'))
             if create_user_info.get('top_follower_gender') is not None:
-                resp_data_creator_data["top_follower_gender"] = create_user_info.get('top_follower_gender')["value"]
+                resp_data_creator_data["top_follower_gender"] = json.dumps(create_user_info.get('top_follower_gender')["value"])
             if create_user_info.get('top_follower_ages') is not None:
                 resp_data_creator_data["top_follower_ages"] = ",".join(
                     create_user_info.get('top_follower_ages')["value"])
             if create_user_info.get('follower_cnt') is not None:
                 resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt')["value"]
             if create_user_info.get('top_follower_age') is not None:
-                resp_data_creator_data["top_follower_age"] = create_user_info.get('top_follower_age')["value"]
+                resp_data_creator_data["top_follower_age"] = json.dumps(create_user_info.get('top_follower_age')["value"])
             if create_user_info.get('video_avg_view_cnt') is not None:
                 resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt')["value"]
             if user_stats is not None:
@@ -133,7 +122,10 @@ def set_user_info(user_data, user_stats, create_user_info):
 def get_tiktok_user_data(user_unique_id_list):
     warit_excel_data = {}
     for create_user in user_unique_id_list:
+
         unique_id = create_user["handle"]["value"]
+        if redis_client.get(RedisKeyConstants.redis_user_info_key + unique_id) is not None:
+            continue
         url = 'https://www.tiktok.com/@' + str(unique_id)
         # 请求头必须添加
         headers = {
@@ -152,6 +144,8 @@ def get_tiktok_user_data(user_unique_id_list):
         tree = etree.HTML(page_text)
         li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
         try:
+            if len(li_list) < 1 :
+                continue
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
             print("获取TK用户" + str(unique_id) + "主页数据\n")
@@ -167,7 +161,7 @@ def get_tiktok_user_data(user_unique_id_list):
             warit_excel_data[unique_id]["user_stats"] = data["user_stats"]
         except Exception as ex:
             redis_client.incr(redis_key_tik_tok_request_error_num, 1)
-            if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 20:
+            if int(redis_client.get(redis_key_tik_tok_request_error_num)) >= 5:
                 logging.logger.error('TikTok官网失败超过次数，请检查网络!')
                 break
             logging.logger.error(ex)
@@ -209,7 +203,7 @@ def paginate_user_id_list(total, N):
 # 从tiktok shop平台获取unique id列表
 def get_tiktok_shop_user_unique_id():
     url = ("https://partner.us.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?"
-           + "user_language=en"
+           + "user_language=en-US"
            + "&partner_id=8648655559104498438"
            + "&aid=359713&app_name=i18n_ecom_alliance"
            + "&device_id=0&device_platform=web&cookie_enabled=true"
@@ -224,12 +218,23 @@ def get_tiktok_shop_user_unique_id():
            )
     headers = {
         'content-type': 'application/json',
-        'cookie': "passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; csrf_session_id=ca5b61eff8b0af80707c95cf876e5ebc; shop_tiktok_lang=en; _ga_BZBQ2QHQSP=GS1.1.1721987355.1.0.1721987355.0.0.0; _ga=GA1.1.598775795.1721987355; _fbp=fb.1.1721987355283.707109687568995495; _tt_enable_cookie=1; _ttp=r0MDjfAUEIGnxr3PhAbIsX8Pk2s; msToken=XykQ6qqo3YZVBkf_0bETlWLEK0awOgzSzLXPaFyJE7EKsO1Q60I5hVj6ajmE0sU7mHx7d9aDkyI4n33xc4b_DoR4BaUb1K_VQVCP0FQFTBIuDB3sM0OytF0NqOQQtwo6FU8jgAXWww==; i18next=en-US; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1722249125%7C5466dea83db9833b8ea3e190617f6fd739f67e478e692f0a3a9fd53d5ea06cdf; odin_tt=7031cdf45a56a6317002e924d219776609118c7308908d8f2672faf5460630faedb187ad08f4c907ef7ae02b2a5b2597614ab661c862313201f1d1948caaf47e; sid_guard=f30ce4c1af5acad3123ae8a78a82c395%7C1722249125%7C5183997%7CFri%2C+27-Sep-2024+10%3A32%3A02+GMT; uid_tt=f96a4bb9a5b8f30fd498ae512b6c578632beef090cc4d3a5d50b9d6f23e79451; uid_tt_ss=f96a4bb9a5b8f30fd498ae512b6c578632beef090cc4d3a5d50b9d6f23e79451; sid_tt=f30ce4c1af5acad3123ae8a78a82c395; sessionid=f30ce4c1af5acad3123ae8a78a82c395; sessionid_ss=f30ce4c1af5acad3123ae8a78a82c395; sid_ucp_v1=1.0.0-KDYwYjg1NDM4ZjE1NjYzYTVhY2I5MTEyNzYyMzAwYmI0NjkzZjIxMDcKGwiRiIPI0O7jy2YQpd-dtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGYzMGNlNGMxYWY1YWNhZDMxMjNhZThhNzhhODJjMzk1; ssid_ucp_v1=1.0.0-KDYwYjg1NDM4ZjE1NjYzYTVhY2I5MTEyNzYyMzAwYmI0NjkzZjIxMDcKGwiRiIPI0O7jy2YQpd-dtQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGYzMGNlNGMxYWY1YWNhZDMxMjNhZThhNzhhODJjMzk1; msToken=-JynR2g_QIEAGAl2yAU1TeyAWaDUU92fEiuNryVYm7juFhFuyG0Ra-cFuEmj0gpQpnnhuP0vvY1WhZuc6htR_Fhm-1S9fp7wBAvNlPfpGDa5Kr0gxx0Y6nPKY7lzNT-N4Lwrasoj",
+        'accept': """application/json, text/plain, */*""",
+        'accept-language': """application/json""",
+        'cookie': """passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; shop_tiktok_lang=en; _ga=GA1.1.598775795.1721987355; _fbp=fb.1.1721987355283.707109687568995495; _tt_enable_cookie=1; _ttp=r0MDjfAUEIGnxr3PhAbIsX8Pk2s; i18next=en-US; csrf_session_id=ef6fcff8ef04eda68a2b2b74f855b351; _ga_BZBQ2QHQSP=GS1.1.1726040514.2.0.1726040517.0.0.0; sid_guard=03348d80803ace821c2c847dfe333762%7C1726040562%7C5183998%7CSun%2C+10-Nov-2024+07%3A42%3A40+GMT; uid_tt=8ae89a209cdc7d3b990341f1e450b8101e34620d994bae2c4d648518f60f7036; uid_tt_ss=8ae89a209cdc7d3b990341f1e450b8101e34620d994bae2c4d648518f60f7036; sid_tt=03348d80803ace821c2c847dfe333762; sessionid=03348d80803ace821c2c847dfe333762; sessionid_ss=03348d80803ace821c2c847dfe333762; sid_ucp_v1=1.0.0-KGI2MWExZDVkY2E1MjFhMzhhMmVhOTU2ZGNmZjY1MGIwMGUzMjMyNDMKGwiRiIPI0O7jy2YQ8pOFtwYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDAzMzQ4ZDgwODAzYWNlODIxYzJjODQ3ZGZlMzMzNzYy; ssid_ucp_v1=1.0.0-KGI2MWExZDVkY2E1MjFhMzhhMmVhOTU2ZGNmZjY1MGIwMGUzMjMyNDMKGwiRiIPI0O7jy2YQ8pOFtwYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDAzMzQ4ZDgwODAzYWNlODIxYzJjODQ3ZGZlMzMzNzYy; msToken=LZf8V5S7sFCiUJY9bg7_lPjniwNJwH9s0U785RNNo7d0oSaU3HyyQwdg1_9yDKveVlOXVYE9BXVPhrL435stZFXRPx2lxVbVY1HPnSiS3B82yMuMqxfUklW0uFNQBcSvqROLHu4=; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1726040563%7C604120fe6d415e715256b0d17d018c935c79b53b79b36fcc33311068a7edaf85; odin_tt=4ceb1f95dd104f067ed7e75967bf5b8b8fd64b8164afeef6b2bece95ae840a3811c1b6392812540e8a04ed2ea2f2e55a7b5d6631f380ba40c0d2da5397c8b22c; msToken=FjemAbgOCjioaTxsaTFH8EkE_MLdzp5PuinlXVEqhpF83X68MaL8p7rmGrUJF1rJytea75VY4qYuRAulpq6l33UTw66AVsixcdJ9-SqdttBAOGlKdI9Mg6KeH1lm0RcYeFBcsKh5cQ==""",
         'priority': 'u=1, i',
+        'origin': 'https://partner.us.tiktokshop.com',
+        'referer': 'https://partner.us.tiktokshop.com/affiliate-cmp/creator?market=100',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent': """Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36""",
     }
-    logging.logger.info("请求url：" + url)
+    # logging.logger.info("请求url：" + url)
     try:
-        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=creator_marketplace_pagination, headers=headers)
+        response_tiktok_shop_user_unique_ids = requests.post(url=url, json=creator_marketplace_pagination,
+                                                             headers=headers)
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
@@ -244,7 +249,6 @@ def get_tiktok_shop_user_unique_id():
     creator_profile_list = res_data.get("creator_profile_list")
     # 分页数据
     next_pagination = res_data.get("next_pagination")
-    redis_client.incr(redis_key_tiktok_shop_num, len(creator_profile_list))  # 测试为一次12条
     if next_pagination.get("has_more"):
         pagination = {
             "size": 12,
@@ -257,32 +261,53 @@ def get_tiktok_shop_user_unique_id():
 
 
 if __name__ == "__main__":
-    # 初始化请求
-    tiktok_shop_request_enable = True
-    creator_marketplace_pagination = {
-        "pagination": {
-            "size": 12,
-            "page": 0
-        },
-        "algorithm": 1
-    }
-    page = args.page
-    # 开始计时
-    t = time.time()
-    # 处理数据爬虫
-    user_list = []
-    while tiktok_shop_request_enable and int(redis_client.get(redis_key_tiktok_shop_num)) < int(page):
-        rsp_data = get_tiktok_shop_user_unique_id()
-        tiktok_shop_request_enable = rsp_data[1]
-        user_list.extend(rsp_data[0])
-    # 固定8个线程
-    ranges = paginate_user_id_list(len(user_list), 2)
-    print(creator_marketplace_pagination)
+    lock_key = "tiktok_shop_partner_center_lock_search_key"
+    search_key = "tiktok_shop_partner_center_search_key"
+    while True:
+        lock = redisLock.acquire_lock(lock_key)
+        enum = None
+        try:
+            if lock:
+                enum = redis_client.blpop(search_key)
+        except Exception as ex:
+            logging.logger.error(ex)
+        finally:
+            redisLock.release_lock(lock_key, lock)
+        if enum is None:
+            break
+        state = 2
+        try:
+            # 初始化请求
+            tiktok_shop_request_enable = True
+            creator_marketplace_pagination = {
+                "algorithm": 1,
+                "filter_params": {},
 
-    thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-    insertUtils.insert_data(thread1.result(), user_list[ranges[0][0]:ranges[0][1]])
-    thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
-    insertUtils.insert_data(thread2.result(), user_list[ranges[1][0]:ranges[1][1]])
-
-    logging.logger.info("爬取数据完成.")
-    logging.logger.info(f'耗时:{time.time() - t:.4f}s')
+                "pagination": {
+                    "size": 12,
+                    "page": 0
+                },
+                "query": str(enum[1], encoding='utf-8'),
+                "query_type": 1
+            }
+            log_creator.logger.info(f"查询字段:{creator_marketplace_pagination}")
+            # 开始计时
+            t = time.time()
+            # 处理数据爬虫
+            user_list = []
+            while tiktok_shop_request_enable:
+                rsp_data = get_tiktok_shop_user_unique_id()
+                tiktok_shop_request_enable = rsp_data[1]
+                user_list.extend(rsp_data[0])
+            if user_list is None:
+                continue
+            # 固定8个线程
+            insert_num = 0
+            ranges = paginate_user_id_list(len(user_list), 2)
+            thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
+            insert_num = insert_num + insertUtils.insert_data(thread1.result(), user_list[ranges[0][0]:ranges[0][1]])
+            thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
+            insert_num = insert_num + insertUtils.insert_data(thread2.result(), user_list[ranges[1][0]:ranges[1][1]])
+            log_creator.logger.info(f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
+        except Exception as ex:
+            log_creator.logger.error(ex)

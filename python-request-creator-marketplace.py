@@ -152,7 +152,7 @@ def start(cookie):
                         "limit": 24,
                         "sort_type": 2,
                         "audience_max_distri_region": "US",
-                        "query": enum[1],
+                        "query": str(enum[1], encoding='utf-8'),
                         "sort_field": "comp_rank",
                         "use_creator_v2": True,
                         "service_name": "search.AdTcmSearchService",

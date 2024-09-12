@@ -82,13 +82,12 @@ def init_redis_search_key():
     # mysql = Mysql()
     # result = mysql.getAll("select search_key from search_key where state = 1")
     result = insert_search_key_sql()
-    print(result)
     # key_list = []
-    redis_client.delete(RedisKeyConstants.creator_marketplace_search_key)
+    redis_client.delete("tiktok_shop_partner_center_search_key")
     r = redis_client.pipeline()
     for item in result:
         # key_list.append(item["search_key"])
-        r.lpush(RedisKeyConstants.creator_marketplace_search_key, item["search_key"])
+        r.lpush("tiktok_shop_partner_center_search_key", item["search_key"])
     r.execute()
 
 

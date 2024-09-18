@@ -205,14 +205,17 @@ def get_tiktok_shop_user_unique_id():
     url = ("https://partner.us.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?"
            + "user_language=en-US"
            + "&partner_id=8648655559104498438"
-           + "&aid=359713&app_name=i18n_ecom_alliance"
-           + "&device_id=0&device_platform=web&cookie_enabled=true"
+           + "&aid=359713"
+           + "&app_name=i18n_ecom_alliance"
+           + "&device_id=0"
+           + "&device_platform=web"
+           + "&cookie_enabled=true"
            + "&screen_width=2195"
            + "&screen_height=1235"
            + "&browser_language=zh-CN"
            + "&browser_platform=Win32"
            + "&browser_name=Mozilla"
-           + "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F126.0.0.0+Safari%2F537.36"
+           + "&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F128.0.0.0+Safari%2F537.36"
            + "&browser_online=true"
            + "&timezone_name=Etc%2FGMT-8"
            )
@@ -220,7 +223,7 @@ def get_tiktok_shop_user_unique_id():
         'content-type': 'application/json',
         'accept': """application/json, text/plain, */*""",
         'accept-language': """application/json""",
-        'cookie': """passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; shop_tiktok_lang=en; _ga=GA1.1.598775795.1721987355; _fbp=fb.1.1721987355283.707109687568995495; _tt_enable_cookie=1; _ttp=r0MDjfAUEIGnxr3PhAbIsX8Pk2s; i18next=en-US; csrf_session_id=ef6fcff8ef04eda68a2b2b74f855b351; _ga_BZBQ2QHQSP=GS1.1.1726040514.2.0.1726040517.0.0.0; sid_guard=03348d80803ace821c2c847dfe333762%7C1726040562%7C5183998%7CSun%2C+10-Nov-2024+07%3A42%3A40+GMT; uid_tt=8ae89a209cdc7d3b990341f1e450b8101e34620d994bae2c4d648518f60f7036; uid_tt_ss=8ae89a209cdc7d3b990341f1e450b8101e34620d994bae2c4d648518f60f7036; sid_tt=03348d80803ace821c2c847dfe333762; sessionid=03348d80803ace821c2c847dfe333762; sessionid_ss=03348d80803ace821c2c847dfe333762; sid_ucp_v1=1.0.0-KGI2MWExZDVkY2E1MjFhMzhhMmVhOTU2ZGNmZjY1MGIwMGUzMjMyNDMKGwiRiIPI0O7jy2YQ8pOFtwYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDAzMzQ4ZDgwODAzYWNlODIxYzJjODQ3ZGZlMzMzNzYy; ssid_ucp_v1=1.0.0-KGI2MWExZDVkY2E1MjFhMzhhMmVhOTU2ZGNmZjY1MGIwMGUzMjMyNDMKGwiRiIPI0O7jy2YQ8pOFtwYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDAzMzQ4ZDgwODAzYWNlODIxYzJjODQ3ZGZlMzMzNzYy; msToken=LZf8V5S7sFCiUJY9bg7_lPjniwNJwH9s0U785RNNo7d0oSaU3HyyQwdg1_9yDKveVlOXVYE9BXVPhrL435stZFXRPx2lxVbVY1HPnSiS3B82yMuMqxfUklW0uFNQBcSvqROLHu4=; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1726040563%7C604120fe6d415e715256b0d17d018c935c79b53b79b36fcc33311068a7edaf85; odin_tt=4ceb1f95dd104f067ed7e75967bf5b8b8fd64b8164afeef6b2bece95ae840a3811c1b6392812540e8a04ed2ea2f2e55a7b5d6631f380ba40c0d2da5397c8b22c; msToken=FjemAbgOCjioaTxsaTFH8EkE_MLdzp5PuinlXVEqhpF83X68MaL8p7rmGrUJF1rJytea75VY4qYuRAulpq6l33UTw66AVsixcdJ9-SqdttBAOGlKdI9Mg6KeH1lm0RcYeFBcsKh5cQ==""",
+        'cookie': """passport_csrf_token=dba075294ddfc9d03b686b602be19940; passport_csrf_token_default=dba075294ddfc9d03b686b602be19940; shop_tiktok_lang=en; _ga=GA1.1.598775795.1721987355; _fbp=fb.1.1721987355283.707109687568995495; _tt_enable_cookie=1; _ttp=r0MDjfAUEIGnxr3PhAbIsX8Pk2s; _ga_BZBQ2QHQSP=GS1.1.1726040514.2.0.1726040517.0.0.0; csrf_session_id=63325e24c61e6ee13ce898b9fb20ec02; ttwid=1%7CPnQs3CWVGgyhErzY4hk9AcR7sI31mmkbg688TspbBB8%7C1726610947%7C4ec6192dae06ec05fa6dcecf401dafc483e5073562c3d069f3e7d83e29126642; odin_tt=3bb92732e9260619dc1b05135d6d36b0221e6a032ca44d44e634852fdc9fe1a8076d507b8af477e93d182a4935f13afd4943bb61116c0dce418bd1a0f830c671; sid_guard=606d38cae9e33a1628813cd9eb3b62f8%7C1726610948%7C4613612%7CSun%2C+10-Nov-2024+07%3A42%3A40+GMT; uid_tt=e24614f91af59ad6a931e312705ac03c603b98c6f80e573c415b19e7a1cafbe5; uid_tt_ss=e24614f91af59ad6a931e312705ac03c603b98c6f80e573c415b19e7a1cafbe5; sid_tt=606d38cae9e33a1628813cd9eb3b62f8; sessionid=606d38cae9e33a1628813cd9eb3b62f8; sessionid_ss=606d38cae9e33a1628813cd9eb3b62f8; sid_ucp_v1=1.0.0-KDU1OTFmMDFhMDQ1ZmI2MTkzN2JlMDdiYzY5NWI0NTU2ZTY4ZTA3YWEKGwiRiIPI0O7jy2YQhPyntwYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDYwNmQzOGNhZTllMzNhMTYyODgxM2NkOWViM2I2MmY4; ssid_ucp_v1=1.0.0-KDU1OTFmMDFhMDQ1ZmI2MTkzN2JlMDdiYzY5NWI0NTU2ZTY4ZTA3YWEKGwiRiIPI0O7jy2YQhPyntwYYofoVIAw4AUDrBxADGgZtYWxpdmEiIDYwNmQzOGNhZTllMzNhMTYyODgxM2NkOWViM2I2MmY4; msToken=vMSBFAG47OMFGe24PxrSVlg69f6XowT-M-rBUsUCuDBEBXbYO-SN2jsAfUJEgMrNRRX0jOvR4B6BfYTXUuo0oFlXykFZ5mx3pEii_YQ3Ezzk4AjpAj8C0NJWG6LQYZ7N435Z1Vo=; msToken=2yAgND9Fj0VtMkUxJPYnbUAVEpEe5lwl2cJPZkMEFU4qDQhKSmDEJF1rBhMXBZn0UvDasNm2LHiZb5Tn4YcfjfJFi88V2Dd6niQA7HKtOWk98BZtT52GxtWJWy02U8SPD-yHsMtf; i18next=en""",
         'priority': 'u=1, i',
         'origin': 'https://partner.us.tiktokshop.com',
         'referer': 'https://partner.us.tiktokshop.com/affiliate-cmp/creator?market=100',

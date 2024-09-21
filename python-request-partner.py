@@ -89,14 +89,16 @@ def set_user_info(user_data, user_stats, create_user_info):
             if create_user_info.get('industry_groups') is not None:
                 resp_data_creator_data["industry_groups"] = json.dumps(create_user_info.get('industry_groups'))
             if create_user_info.get('top_follower_gender') is not None:
-                resp_data_creator_data["top_follower_gender"] = json.dumps(create_user_info.get('top_follower_gender')["value"])
+                resp_data_creator_data["top_follower_gender"] = json.dumps(
+                    create_user_info.get('top_follower_gender')["value"])
             if create_user_info.get('top_follower_ages') is not None:
                 resp_data_creator_data["top_follower_ages"] = ",".join(
                     create_user_info.get('top_follower_ages')["value"])
             if create_user_info.get('follower_cnt') is not None:
                 resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt')["value"]
             if create_user_info.get('top_follower_age') is not None:
-                resp_data_creator_data["top_follower_age"] = json.dumps(create_user_info.get('top_follower_age')["value"])
+                resp_data_creator_data["top_follower_age"] = json.dumps(
+                    create_user_info.get('top_follower_age')["value"])
             if create_user_info.get('video_avg_view_cnt') is not None:
                 resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt')["value"]
             if user_stats is not None:
@@ -134,7 +136,7 @@ def get_tiktok_user_data(user_unique_id_list):
         }
         global response
         try:
-            response = requests.get(url=url, headers=headers)
+            response = requests.get(url=url, headers=headers,timeout=60)
         except Exception as ex:
             logging.logger.error(ex)
             logging.logger.error("\033[31m用户：" + unique_id + "TK官网无法访问，请检查网络!'\033[0m")
@@ -144,7 +146,7 @@ def get_tiktok_user_data(user_unique_id_list):
         tree = etree.HTML(page_text)
         li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
         try:
-            if len(li_list) < 1 :
+            if len(li_list) < 1:
                 continue
             response_data = json.loads(li_list[0])
             user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
@@ -237,7 +239,7 @@ def get_tiktok_shop_user_unique_id():
     # logging.logger.info("请求url：" + url)
     try:
         response_tiktok_shop_user_unique_ids = requests.post(url=url, json=creator_marketplace_pagination,
-                                                             headers=headers)
+                                                             headers=headers, timeout=60)
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
@@ -311,6 +313,7 @@ if __name__ == "__main__":
             insert_num = insert_num + insertUtils.insert_data(thread1.result(), user_list[ranges[0][0]:ranges[0][1]])
             thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
             insert_num = insert_num + insertUtils.insert_data(thread2.result(), user_list[ranges[1][0]:ranges[1][1]])
-            log_creator.logger.info(f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
+            log_creator.logger.info(
+                f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
         except Exception as ex:
             log_creator.logger.error(ex)

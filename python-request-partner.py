@@ -83,11 +83,20 @@ def set_user_info(user_data, user_stats, create_user_info):
                 resp_data_creator_data["selection_region"] = create_user_info.get('selection_region')["value"]
             if create_user_info.get('med_gmv_revenue_range') is not None:
                 resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range')["value"]
+            # MCN机构
+            resp_data_creator_data["creator_bind_mcn_name"] = ''
             if create_user_info.get('creator_bind_mcn_name') is not None:
-                resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(
-                    create_user_info.get('creator_bind_mcn_name'))
+                creator_bind_mcn_name = create_user_info.get('creator_bind_mcn_name')
+                if creator_bind_mcn_name.get("value") is not None:
+                    resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(create_user_info.get('creator_bind_mcn_name')["value"])
+            print( resp_data_creator_data["creator_bind_mcn_name"])
+            # 达人兴趣标签
+            resp_data_creator_data["industry_groups"] = ''
             if create_user_info.get('industry_groups') is not None:
-                resp_data_creator_data["industry_groups"] = json.dumps(create_user_info.get('industry_groups'))
+                industry_groups = create_user_info.get('industry_groups')
+                if industry_groups.get('value') is not None:
+                    resp_data_creator_data["industry_groups"] = json.dumps(
+                        create_user_info.get('industry_groups')["value"])
             if create_user_info.get('top_follower_gender') is not None:
                 resp_data_creator_data["top_follower_gender"] = json.dumps(
                     create_user_info.get('top_follower_gender')["value"])
@@ -136,7 +145,7 @@ def get_tiktok_user_data(user_unique_id_list):
         }
         global response
         try:
-            response = requests.get(url=url, headers=headers,timeout=60)
+            response = requests.get(url=url, headers=headers, timeout=60)
         except Exception as ex:
             logging.logger.error(ex)
             logging.logger.error("\033[31m用户：" + unique_id + "TK官网无法访问，请检查网络!'\033[0m")

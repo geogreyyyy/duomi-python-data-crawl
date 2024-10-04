@@ -27,6 +27,8 @@ thread_num = 2
 # redis初始化
 redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
                            password=Config.REDIS_PASSWORD)
+redis_search_key_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=1,
+                           password=Config.REDIS_PASSWORD)
 # redis异常状态
 redis_key_error_num = RedisKeyConstants.redis_key_error_num
 redis_key_response_num = RedisKeyConstants.redis_key_response_num
@@ -326,7 +328,7 @@ if __name__ == "__main__":
         enum = None
         try:
             if lock:
-                enum = redis_client.blpop(search_key, timeout=20)
+                enum = redis_search_key_client.blpop(search_key, timeout=20)
         except Exception as ex:
             logging.logger.error(ex)
         finally:

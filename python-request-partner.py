@@ -70,7 +70,7 @@ def set_user_info(user_data, user_stats, create_user_info):
             resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
             resp_data_user_data["region"] = user_data.get('region')
             resp_data_user_data["sec_uid"] = user_data.get('secUid')
-            resp_data_user_data["bio_link"] = json.dumps(user_data.get('bioLink'))
+            resp_data_user_data["bio_link"] = json.dumps(user_data.get('bioLink', ''))
             # create_user_info
             resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid')["value"]
             resp_data_creator_data["user_id"] = user_data.get('id')
@@ -88,8 +88,8 @@ def set_user_info(user_data, user_stats, create_user_info):
             if create_user_info.get('creator_bind_mcn_name') is not None:
                 creator_bind_mcn_name = create_user_info.get('creator_bind_mcn_name')
                 if creator_bind_mcn_name.get("value") is not None:
-                    resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(create_user_info.get('creator_bind_mcn_name')["value"])
-            print( resp_data_creator_data["creator_bind_mcn_name"])
+                    resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(
+                        create_user_info.get('creator_bind_mcn_name')["value"])
             # 达人兴趣标签
             resp_data_creator_data["industry_groups"] = ''
             if create_user_info.get('industry_groups') is not None:

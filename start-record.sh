@@ -9,7 +9,7 @@ images=$(docker images| grep "python-data-record-run" | awk '{print $3}')
 if [ "$images" != "" ]; then
         docker rmi $images
 fi
-docker build -t python-data-record-run:1.0 .
+docker build -t python-data-record-run:1.0 -f record-start/Dockerfile .
 
 newimages=$(docker images| grep "python-data-record-run" | awk '{print $3}')
 

@@ -1,6 +1,6 @@
 FROM python-data-crawl:latest
 
-COPY ../ /app
+COPY . /app
 WORKDIR /app
 
 CMD ["python", "python-request-record.py"]

@@ -336,7 +336,5 @@ if __name__ == "__main__":
         except Exception as ex:
             logging.logger.error(ex)
             state = 4
-        finally:
-            insertUtils.updateSearchKey(str(enum[1], encoding='utf-8'), state)
     pool.shutdown()
     redis_client.set(affiliate_center_crawl_status, 0)

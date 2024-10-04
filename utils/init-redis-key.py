@@ -45,7 +45,6 @@ insert_sql = """
 
 
 def insert_search_key_sql():
-    mysql = Mysql()
     search_data = []
     for char1 in range(ord('a'), ord('z') + 1):
         search_data.append({"id": str(chr(char1)), "search_key": str(chr(char1)), "state": 1, })
@@ -53,45 +52,57 @@ def insert_search_key_sql():
             search_data.append(
                 {"id": str(chr(char1) + chr(char2)), "search_key": str(chr(char1) + chr(char2)), "state": 1, })
             for char3 in range(ord('a'), ord('z') + 1):
-                search_data.append(
-                    {"id": str(chr(char1) + chr(char2) + chr(char3)),
-                     "search_key": str(chr(char1) + chr(char2) + chr(char3)), "state": 1, })
                 for char4 in range(ord('a'), ord('z') + 1):
                     search_data.append(
-                        {"id": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
-                         "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)), "state": 1, })
-    for char1 in range(ord('0'), ord('9') + 1):
-        search_data.append({"id": str(chr(char1)), "search_key": str(chr(char1)), "state": 1, })
-        for char2 in range(ord('0'), ord('9') + 1):
-            search_data.append(
-                {"id": str(chr(char1) + chr(char2)), "search_key": str(chr(char1) + chr(char2)), "state": 1, })
-            for char3 in range(ord('0'), ord('9') + 1):
-                search_data.append(
-                    {"id": str(chr(char1) + chr(char2) + chr(char3)),
-                     "search_key": str(chr(char1) + chr(char2) + chr(char3)), "state": 1, })
-                for char4 in range(ord('0'), ord('9') + 1):
-                    search_data.append(
-                        {"id": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
-                         "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)), "state": 1, })
+                        {"id": str(chr(char1) + chr(char2)),
+                         "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
+                         "state": 1, })
+
+    # for char1 in range(ord('0'), ord('9') + 1):
+    #     search_data.append({"id": str(chr(char1)), "search_key": str(chr(char1)), "state": 1, })
+    #     for char2 in range(ord('0'), ord('9') + 1):
+    #         search_data.append(
+    #             {"id": str(chr(char1) + chr(char2)), "search_key": str(chr(char1) + chr(char2)), "state": 1, })
+    #         for char3 in range(ord('0'), ord('9') + 1):
+    #             search_data.append(
+    #                 {"id": str(chr(char1) + chr(char2) + chr(char3)),
+    #                  "search_key": str(chr(char1) + chr(char2) + chr(char3)), "state": 1, })
+    #             for char4 in range(ord('0'), ord('9') + 1):
+    #                 search_data.append(
+    #                     {"id": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)),
+    #                      "search_key": str(chr(char1) + chr(char2) + chr(char3) + chr(char4)), "state": 1, })
+
     # mysql.insertMany(insert_sql, search_data)
     # mysql.dispose()
     return search_data
 
 
 def init_redis_search_key():
-    # mysql = Mysql()
-    # result = mysql.getAll("select search_key from search_key where state = 1")
     result = insert_search_key_sql()
-    # key_list = []
     redis_client.delete("tiktok_shop_partner_center_search_key")
     r = redis_client.pipeline()
     for item in result:
-        # key_list.append(item["search_key"])
         r.lpush("tiktok_shop_partner_center_search_key", item["search_key"])
+    r.execute()
+
+
+def insert_record_key_sql():
+    search_data = []
+    search_data.append({"id": 'aaliyahharris', "search_key": 'aaliyahharris', "state": 1, })
+    return  search_data
+
+
+def init_redis_record_key():
+    result = insert_record_key_sql()
+    # redis_client.delete("tiktok_TK_record_search_key")
+    r = redis_client.pipeline()
+    for item in result:
+        r.lpush("tiktok_TK_record_search_key", item["search_key"])
     r.execute()
 
 
 if __name__ == '__main__':
     # init_unique_id()
-    aa = init_redis_search_key()
+    # aa = init_redis_search_key()
+    aa = init_redis_record_key()
     # print(aa)

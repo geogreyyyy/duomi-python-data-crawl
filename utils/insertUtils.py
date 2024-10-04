@@ -25,6 +25,84 @@ redis_user_info_key = RedisKeyConstants.redis_user_info_key
 table_name_add = ""
 
 
+def update_creator_user(data):
+    mysql = Mysql()
+    creator_data = data.get("creator_user")
+    if creator_data is not None:
+        creator_user_update_sql = f"""  
+        UPDATE `TIKTOK_CREATOR_USER_INFO{table_name_add}`
+        SET creator_oecuid = %(creator_oecuid)s,  
+            unique_id = %(handle)s, 
+            units_sold_range = %(units_sold_range)s,  
+            selection_region = %(selection_region)s,  
+            med_gmv_revenue_range = %(med_gmv_revenue_range)s,  
+            creator_bind_mcn_name = %(creator_bind_mcn_name)s,  
+            industry_groups = %(industry_groups)s,  
+            top_follower_gender = %(top_follower_gender)s,  
+            top_follower_ages = %(top_follower_ages)s,  
+            follower_cnt = %(follower_cnt)s,  
+            top_follower_age = %(top_follower_age)s,  
+            video_avg_view_cnt = %(video_avg_view_cnt)s,
+            update_by = 'python-tiktok-shop-partner',
+            update_time = '{time.strftime('%Y-%m-%d %H:%M:%S')}'
+        WHERE user_id = %(user_id)s  
+        """
+        try:
+            mysql.update(creator_user_update_sql, creator_data)
+        except Exception as ex:
+            mysql.dispose(isEnd=0)
+            logging.logger.error(ex)
+            logging.logger.error(creator_data)
+            raise Exception(ex)
+    user_info = data.get("user_data")
+    if user_info is not None:
+        user_info_update_sql = f"""  
+        UPDATE `TIKTOK_USER_INFO{table_name_add}`  
+        SET unique_id = %(unique_id)s,  
+            nickname = %(nickname)s,  
+            avatar_larger = %(avatar_larger)s,  
+            avatar_medium = %(avatar_medium)s,  
+            avatar_thumb = %(avatar_thumb)s,  
+            signature = %(signature)s,  
+            region = %(region)s,  
+            sec_uid = %(sec_uid)s,  
+            bio_link = %(bio_link)s,  
+            update_by = 'python-tiktok-shop-partner',
+            update_time = '{time.strftime('%Y-%m-%d %H:%M:%S')}'
+        WHERE id = %(id)s  
+        """
+        try:
+            mysql.update(user_info_update_sql, user_info)
+        except Exception as ex:
+            mysql.dispose(isEnd=0)
+            logging.logger.error(ex)
+            logging.logger.error(user_info)
+            raise Exception(ex)
+    user_stats_data = data.get("user_stats")
+    if user_stats_data is not None:
+        user_stats_update_sql = f"""  
+        UPDATE `TIKTOK_USER_STATS{table_name_add}`  
+        SET follower_count = %(follower_count)s,  
+            following_count = %(following_count)s,  
+            heart = %(heart)s,
+            heart_count = %(heart_count)s,  
+            video_count = %(video_count)s,  
+            digg_count = %(digg_count)s,  
+            friend_count = %(friend_count)s,  
+            update_by = 'python-tiktok-shop-partner',
+            update_time = '{time.strftime('%Y-%m-%d %H:%M:%S')}'
+        WHERE user_id = %(user_id)s  
+        """
+        try:
+            mysql.update(user_stats_update_sql, user_stats_data)
+        except Exception as ex:
+            mysql.dispose(isEnd=0)
+            logging.logger.error(ex)
+            logging.logger.error(user_stats_data)
+            raise Exception(ex)
+    mysql.dispose()
+
+
 # 小店后台插入数据库
 def insert_creator_user(data):
     mysql = Mysql()
@@ -35,7 +113,6 @@ def insert_creator_user(data):
     VALUES(%(user_id)s, %(creator_oecuid)s, %(handle)s,%(units_sold_range)s,%(selection_region)s,
     %(med_gmv_revenue_range)s,%(creator_bind_mcn_name)s,%(industry_groups)s, %(top_follower_gender)s,
     %(top_follower_ages)s,%(follower_cnt)s, %(top_follower_age)s, %(video_avg_view_cnt)s,'python-tiktok-shop-partner','{time.strftime('%Y-%m-%d %H:%M:%S')}' )"""
-
     try:
         mysql.insertOne(creator_user_insert_sql, creator_user)
     except Exception as ex:
@@ -175,20 +252,14 @@ def insert_data(data, unique_id_list):
                     if data.get(handle) is None:
                         continue
                     insert_creator_user(data[handle])
-                    redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
                     insert_num = insert_num + 1
+                    redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
                 except Exception as ex:
                     logging.logger.error(handle + "出错!")
                     logging.logger.error(ex)
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     return insert_num
-
-
-def updateSearchKey(search_key, state):
-    mysql = Mysql()
-    mysql.update("update search_key set state = %s where id = %s", [state, str(search_key)])
-    mysql.dispose()
 
 
 def insert_data_creator_marketplace(data):
@@ -214,3 +285,29 @@ def insert_data_creator_marketplace(data):
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     logging.logger.info(f"总共插入{len(data)}条数据，其中重复{no_insert_num}条")
     return len(data) - no_insert_num
+
+
+def record_data(data, unique_id_list):
+    if len(data) == 0:
+        return
+    get_table_index(len(data))
+    lock = redisLock.acquire_lock(RedisKeyConstants.lock_insert_data)
+    insert_num = 0
+    update_num = 0
+    if lock:
+        try:
+            for handle in unique_id_list:
+                try:
+                    if redis_client.get(RedisKeyConstants.redis_user_info_key + handle) is not None:
+                        update_creator_user(data[handle])
+                        update_num = update_num + 1
+                    else:
+                        insert_creator_user(data[handle])
+                        insert_num = insert_num + 1
+                    redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
+                except Exception as ex:
+                    logging.logger.error(handle + "出错!")
+                    logging.logger.error(ex)
+        finally:
+            redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
+    return [insert_num, update_num]

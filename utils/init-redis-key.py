@@ -89,12 +89,12 @@ def init_redis_search_key():
 def insert_record_key_sql():
     search_data = []
     search_data.append({"id": 'aaliyahharris', "search_key": 'aaliyahharris', "state": 1, })
-    return  search_data
+    return search_data
 
 
 def init_redis_record_key():
     result = insert_record_key_sql()
-    # redis_client.delete("tiktok_TK_record_search_key")
+    redis_client.delete("tiktok_TK_record_search_key")
     r = redis_client.pipeline()
     for item in result:
         r.lpush("tiktok_TK_record_search_key", item["search_key"])
@@ -103,6 +103,6 @@ def init_redis_record_key():
 
 if __name__ == '__main__':
     # init_unique_id()
-    # aa = init_redis_search_key()
-    aa = init_redis_record_key()
+    aa = init_redis_search_key()
+    # aa = init_redis_record_key()
     # print(aa)

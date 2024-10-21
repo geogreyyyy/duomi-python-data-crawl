@@ -9,8 +9,8 @@ images=$(docker images| grep "python-data-crawl-run" | awk '{print $3}')
 if [ "$images" != "" ]; then
         docker rmi $images
 fi
-docker build -t python-data-crawl-run:1.0 dockerfile-start/us/Dockerfile .
+docker build -t python-data-crawl-run:1.0 -f dockerfile-start/us/Dockerfile .
 
 newimages=$(docker images| grep "python-data-crawl-run" | awk '{print $3}')
 
-docker run -itd  --name python-data-crawl-run --network host  $newimages
+docker run -itd --name python-data-crawl-run --network host $newimages

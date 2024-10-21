@@ -239,11 +239,11 @@ def get_table_index(data_num):
 
 
 def insert_data(data, unique_id_list):
+    insert_num = 0
     if len(data) == 0:
-        return
+        return insert_num
     get_table_index(len(data))
     lock = redisLock.acquire_lock(RedisKeyConstants.lock_insert_data)
-    insert_num = 0
     if lock:
         try:
             for uniq_id in unique_id_list:
@@ -308,6 +308,7 @@ def record_data(data, unique_id_list):
                 except Exception as ex:
                     logging.logger.error(handle + "出错!")
                     logging.logger.error(ex)
+
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     return [insert_num, update_num]

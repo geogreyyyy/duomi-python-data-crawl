@@ -13,24 +13,38 @@ redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Co
 
 
 # 加锁的过程
-def acquire_lock(lock_name, args=None, acquite_timeout=30, time_out=120):
+
+def acquire_lock(lock_name, args=None, acquire_timeout=30, time_out=120):
+    global redis_client
     identifier = str(uuid.uuid4())
-    # 客户端获取锁的结束时间
-    end = time.time() + acquite_timeout
+    # Client attempts to acquire lock before this time
+    end = time.time() + acquire_timeout
     lock_names = lock_name
-    # print(f"进程 {str(args)} end_time:{end}")
     while time.time() < end:
-        # setnx(key,value) 只有key不存在情况下，将key的值设置为value 返回True,若key存在则不做任何动作,返回False
-        if redis_client.setnx(lock_names, identifier):
-            # 设置键的过期时间，过期自动剔除，释放锁
-            # print('获得锁:进程' + str(args))
-            # print(f'分布式锁value:{identifier}')
-            redis_client.expire(lock_name, time_out)
-            return identifier
-        # 当锁未被设置过期时间时，重新设置其过期时间
-        elif redis_client.ttl(lock_name) == -1:
-            redis_client.expire(lock_name, time_out)
-        time.sleep(0.001)
+        try:
+            # Attempt to acquire the lock using setnx (set if not exists)
+            if redis_client.setnx(lock_names, identifier):
+                # If lock acquired, set expiration for automatic release
+                redis_client.expire(lock_name, time_out)
+                return identifier
+            # If lock exists but has no expiration, set the expiration again
+            elif redis_client.ttl(lock_name) == -1:
+                redis_client.expire(lock_name, time_out)
+
+        except (ConnectionError, TimeoutError) as e:
+            print(f"Error: {str(e)}. Attempting to reconnect...")
+            # Try reconnecting the Redis client
+            try:
+                redis_client = redis.StrictRedis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+                                                 password=Config.REDIS_PASSWORD)
+                print("Reconnected to Redis.")
+            except Exception as reconnection_error:
+                print(f"Reconnection failed: {str(reconnection_error)}")
+                # Exit loop or continue based on the policy for reconnection
+                time.sleep(1)  # Wait before retrying to connect
+
+        time.sleep(0.001)  # Small delay before retrying
+
     return False
 
 

@@ -42,8 +42,8 @@ redis_client.set(redis_key_tik_tok_request_error_num, 0)
 logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
 log_creator = log.Logger('tiktok-shop-partner.log', level='INFO')
 # 全局状态变量
-global tiktok_shop_request_enable
-global creator_marketplace_pagination
+tiktok_shop_request_enable = True
+creator_marketplace_pagination = {}
 
 
 # 设置用户属性
@@ -217,6 +217,7 @@ def paginate_user_id_list(total, N):
 
 # 从tiktok shop平台获取unique id列表
 def get_tiktok_shop_user_unique_id():
+    global creator_marketplace_pagination
     url = (
         """https://affiliate.tiktok.com/api/v1/oec/affiliate/creator/marketplace/find?user_language=en&aid=4331&app_name=i18n_ecom_alliance&device_id=0&fp=verify_m2eg07yc_UD0cGROh_rVmD_4obr_8X5q_rOfrNhCQ8wZe&device_platform=web&cookie_enabled=true&screen_width=2195&screen_height=1235&browser_language=en&browser_platform=Win32&browser_name=Mozilla&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F129.0.0.0+Safari%2F537.36&browser_online=true&timezone_name=Etc%2FGMT-8&oec_seller_id=7495052999137724712&shop_region=MY&msToken=mu2ftbKUVY8FF4_xGnCl9H0UFWuzRbCbR0a3xxl6AT31b6ynA4rimelf0R2gs9R05GHKt9ax7ybQdf_Rx48FkTWuQpNXOkVw6Xqtkf-3kZY0DIlg5fiObUnKoRa7kWFhxF-VHQ==&X-Bogus=DFSzswVLB7D70ZrStQ-UU2Rt4e-9&_signature=_02B4Z6wo00001RrIemAAAIDANE-3SpDLruUayH7AACGi5a"""
     )
@@ -265,7 +266,7 @@ def get_tiktok_shop_user_unique_id():
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
-if __name__ == "__main__":
+def start():
     lock_key = "tiktok_shop_partner_center_MY_lock_search_key"
     search_key = "tiktok_shop_partner_center_MY_search_key"
     while True:
@@ -282,6 +283,8 @@ if __name__ == "__main__":
             break
         state = 2
         try:
+            global creator_marketplace_pagination
+            global tiktok_shop_request_enable
             # 初始化请求
             tiktok_shop_request_enable = True
             creator_marketplace_pagination = {
@@ -317,4 +320,10 @@ if __name__ == "__main__":
                 f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
         except Exception as ex:
             log_creator.logger.error(ex)
-            sendFeiShuMsg.setFeiShuMsg(f"马来数据爬取失败:{ex},请及时修复")
+
+
+if __name__ == "__main__":
+    try:
+        start()
+    except Exception as ex:
+        sendFeiShuMsg.setFeiShuMsg(f"马来数据爬取失败:{ex},请及时修复")

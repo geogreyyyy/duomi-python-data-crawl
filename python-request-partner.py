@@ -43,8 +43,8 @@ redis_client.set(redis_key_tik_tok_request_error_num, 0)
 logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
 log_creator = log.Logger('tiktok-shop-partner.log', level='INFO')
 # 全局状态变量
-global tiktok_shop_request_enable
-global creator_marketplace_pagination
+tiktok_shop_request_enable=True
+creator_marketplace_pagination={}
 
 
 # 设置用户属性
@@ -214,6 +214,7 @@ def paginate_user_id_list(total, N):
 
 # 从tiktok shop平台获取unique id列表
 def get_tiktok_shop_user_unique_id():
+    global creator_marketplace_pagination
     url = ("https://partner.us.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?"
            + "user_language=en-US"
            + "&partner_id=8648655559104498438"
@@ -275,7 +276,7 @@ def get_tiktok_shop_user_unique_id():
     return [creator_profile_list, next_pagination.get("has_more")]
 
 
-if __name__ == "__main__":
+def start():
     lock_key = "tiktok_shop_partner_center_lock_search_key"
     search_key = "tiktok_shop_partner_center_search_key"
     while True:
@@ -292,6 +293,8 @@ if __name__ == "__main__":
             break
         state = 2
         try:
+            global tiktok_shop_request_enable
+            global creator_marketplace_pagination
             # 初始化请求
             tiktok_shop_request_enable = True
             creator_marketplace_pagination = {
@@ -327,4 +330,10 @@ if __name__ == "__main__":
                 f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
         except Exception as ex:
             log_creator.logger.error(ex)
-            sendFeiShuMsg.setFeiShuMsg(f"美区数据爬取失败:{ex},请及时修复")
+
+
+if __name__ == "__main__":
+    try:
+        start()
+    except Exception as ex:
+        sendFeiShuMsg.setFeiShuMsg(f"美区数据爬取失败:{ex},请及时修复")

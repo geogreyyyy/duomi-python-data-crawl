@@ -13,6 +13,7 @@ from utils import insertUtils
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
 from utils import redisLock
+from utils import sendFeiShuMsg
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -326,3 +327,4 @@ if __name__ == "__main__":
                 f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
         except Exception as ex:
             log_creator.logger.error(ex)
+            sendFeiShuMsg.setFeiShuMsg(f"美区数据爬取失败:{ex},请及时修复")

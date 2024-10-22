@@ -184,48 +184,118 @@ def get_tiktok_user_data(user_unique_id_list):
 
 
 # 根据unique id直接去tiktok主页爬取
+# def get_tiktok_uniqueId(unique_id):
+#     warit_excel_data = {}
+#     if redis_client.get(RedisKeyConstants.redis_user_info_key + unique_id) is not None:
+#         print("uniqueId已存在，进行更新")
+#     url = 'https://www.tiktok.com/@' + str(unique_id)
+#     # 请求头必须添加
+#     headers = {
+#         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
+#                       'Chrome/71.0.3578.98 Safari/537.36',
+#     }
+#     global response
+#     try:
+#         response = requests.get(url=url, headers=headers, timeout=60)
+#     except Exception as ex:
+#         logging.logger.error(ex)
+#         logging.logger.error("\033[31m用户：" + unique_id + "TK官网无法访问，请检查网络!'\033[0m")
+#         return warit_excel_data
+#     # 获取页面原始编码格式
+#     page_text = response.text
+#     tree = etree.HTML(page_text)
+#     li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
+#     try:
+#         if len(li_list) < 1:
+#             return warit_excel_data
+#         response_data = json.loads(li_list[0])
+#         user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
+#         print(user_detail)
+#         print("获取TK用户" + str(unique_id) + "主页数据\n")
+#         user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
+#         if user_info is None:
+#             return warit_excel_data
+#         user_data = user_info.get("user")
+#         user_state = user_info.get('stats')
+#         data = set_user_info(user_data, user_state, {})
+#         warit_excel_data[unique_id] = {}
+#         warit_excel_data[unique_id]["creator_user"] = data["creator_user"]
+#         warit_excel_data[unique_id]["user_data"] = data["user_data"]
+#         warit_excel_data[unique_id]["user_stats"] = data["user_stats"]
+#     except Exception as ex:
+#         logging.logger.error(ex)
+#         return warit_excel_data
+#     return warit_excel_data
+
+
 def get_tiktok_uniqueId(unique_id):
     warit_excel_data = {}
-    if redis_client.get(RedisKeyConstants.redis_user_info_key + unique_id) is not None:
-        print("uniqueId已存在，进行更新")
-    url = 'https://www.tiktok.com/@' + str(unique_id)
-    # 请求头必须添加
+
+    # Check if user exists in Redis and log accordingly
+    redis_key = RedisKeyConstants.redis_user_info_key + unique_id
+    if redis_client.get(redis_key) is not None:
+        print(f"uniqueId {unique_id} already exists, proceeding with update.")
+
+    url = f'https://www.tiktok.com/@{unique_id}'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/71.0.3578.98 Safari/537.36',
     }
-    global response
+
+    # Attempt to fetch TikTok profile page
     try:
-        response = requests.get(url=url, headers=headers, timeout=60)
-    except Exception as ex:
-        logging.logger.error(ex)
-        logging.logger.error("\033[31m用户：" + unique_id + "TK官网无法访问，请检查网络!'\033[0m")
+        response = requests.get(url=url, headers=headers, timeout=20)  # Lowered timeout to 20 seconds
+        response.raise_for_status()  # Raises HTTPError for bad responses
+    except requests.exceptions.RequestException as ex:
+        logging.logger.error(f"Failed to fetch TikTok page for {unique_id}: {ex}")
         return warit_excel_data
-    # 获取页面原始编码格式
-    page_text = response.text
-    tree = etree.HTML(page_text)
-    li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
+
+    # Parse the HTML response and extract the user data
     try:
-        if len(li_list) < 1:
+        page_text = response.text
+        tree = etree.HTML(page_text)
+        li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
+
+        # If no relevant data found, return empty dictionary
+        if not li_list:
+            logging.logger.warning(f"No user data found for {unique_id} on TikTok.")
             return warit_excel_data
+
+        # Load the data from the extracted JSON-like structure
         response_data = json.loads(li_list[0])
-        user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
-        print("获取TK用户" + str(unique_id) + "主页数据\n")
-        user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
-        if user_info is None:
+        user_detail = response_data.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail')
+
+        if not user_detail:
+            logging.logger.warning(f"No user details available for {unique_id}.")
             return warit_excel_data
+
+        # Log success in fetching user data
+        logging.logger.info(f"Successfully fetched user data for {unique_id}.")
+
+        # Extract relevant user info
+        user_info = user_detail.get('userInfo')
+        if not user_info:
+            logging.logger.warning(f"No user info found for {unique_id}.")
+            return warit_excel_data
+
         user_data = user_info.get("user")
         user_state = user_info.get('stats')
-        data = set_user_info(user_data, user_state, {})
-        warit_excel_data[unique_id] = {}
-        warit_excel_data[unique_id]["creator_user"] = data["creator_user"]
-        warit_excel_data[unique_id]["user_data"] = data["user_data"]
-        warit_excel_data[unique_id]["user_stats"] = data["user_stats"]
-    except Exception as ex:
-        logging.logger.error(ex)
-        return warit_excel_data
-    return warit_excel_data
 
+        # Call a function to set user information (assuming it exists)
+        data = set_user_info(user_data, user_state, {})
+
+        # Store the parsed data in the warit_excel_data dictionary
+        warit_excel_data[unique_id] = {
+            "creator_user": data["creator_user"],
+            "user_data": data["user_data"],
+            "user_stats": data["user_stats"],
+        }
+
+    except (json.JSONDecodeError, KeyError, etree.XMLSyntaxError) as ex:
+        logging.logger.error(f"Error processing user data for {unique_id}: {ex}")
+        return warit_excel_data
+
+    return warit_excel_data
 
 # 把总数据量拆分成50每页的数据
 def paginate(total_pages, pages_per_range):
@@ -359,7 +429,7 @@ if __name__ == "__main__":
                 rsp_data = get_tiktok_shop_user_unique_id()
                 tiktok_shop_request_enable = rsp_data[1]
                 user_list.extend(rsp_data[0])
-            if user_list is not None:
+            if user_list is not None and len(user_list) > 0:
                 # 固定8个线程
                 ranges = paginate_user_id_list(len(user_list), 2)
                 thread1_user_list = user_list[ranges[0][0]:ranges[0][1]]
@@ -379,6 +449,7 @@ if __name__ == "__main__":
                     f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条，更新{update_num}条。")
             else:
                 resultData = get_tiktok_uniqueId(str(enum[1], encoding='utf-8'))
+                print(resultData)
                 [insert_num, update_num] = insertUtils.record_data(resultData, [(str(enum[1], encoding='utf-8'))])
                 log_creator.logger.info(
                     f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(resultData)}条，其中存储{insert_num}条，更新{update_num}条。")

@@ -12,6 +12,7 @@ from utils import insertUtils
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
 from utils import redisLock
+from utils import sendFeiShuMsg
 
 # 时间格式化
 timeArray = time.localtime(time.time())
@@ -75,14 +76,16 @@ def set_user_info(user_data, user_stats, create_user_info):
             resp_data_creator_data["user_id"] = user_data.get('id')
             resp_data_creator_data["handle"] = create_user_info.get('handle').get("value", "")
             if create_user_info.get('is_authorized') is not None:
-                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized').get("value", "") else 2
+                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized').get("value",
+                                                                                                         "") else 2
             if create_user_info.get('units_sold_range') is not None:
                 resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range').get("value", "")
             if create_user_info.get('selection_region') is not None:
                 resp_data_creator_data["selection_region"] = create_user_info.get('selection_region').get("value", "")
             if create_user_info.get('med_gmv_revenue_range') is not None:
-                resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range').get("value",
-                                                                                                                    "")
+                resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range').get(
+                    "value",
+                    "")
             # MCN机构
             resp_data_creator_data["creator_bind_mcn_name"] = ''
             if create_user_info.get('creator_bind_mcn_name') is not None:
@@ -109,7 +112,8 @@ def set_user_info(user_data, user_stats, create_user_info):
                 resp_data_creator_data["top_follower_age"] = json.dumps(
                     create_user_info.get('top_follower_age').get("value", ""))
             if create_user_info.get('video_avg_view_cnt') is not None:
-                resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt').get("value", "")
+                resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt').get("value",
+                                                                                                              "")
             if user_stats is not None:
                 # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
                 resp_data_user_stats["follower_count"] = user_stats.get('followerCount')
@@ -313,3 +317,4 @@ if __name__ == "__main__":
                 f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
         except Exception as ex:
             log_creator.logger.error(ex)
+            sendFeiShuMsg.setFeiShuMsg(f"越南数据爬取失败:{ex},请及时修复")

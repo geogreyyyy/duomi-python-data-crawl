@@ -1,16 +1,16 @@
-cid=$(docker ps -a| grep "python-data-crawl-run" |  awk '{print $1}')
+cid=$(docker ps -a| grep "python-data-crawl-run-us" |  awk '{print $1}')
 if [ "$cid" != "" ]; then
         docker stop $cid
         docker rm $cid
 fi
 echo "docker ps id"
 echo $cid
-images=$(docker images| grep "python-data-crawl-run" | awk '{print $3}')
+images=$(docker images| grep "python-data-crawl-run-us" | awk '{print $3}')
 if [ "$images" != "" ]; then
         docker rmi $images
 fi
-docker build -t python-data-crawl-run:1.0 -f dockerfile-start/us/Dockerfile .
+docker build -t python-data-crawl-run-us:1.0 -f dockerfile-start/us/Dockerfile .
 
-newimages=$(docker images| grep "python-data-crawl-run" | awk '{print $3}')
+newimages=$(docker images| grep "python-data-crawl-run-us" | awk '{print $3}')
 
-docker run -itd --name python-data-crawl-run --network host $newimages
+docker run -itd --name python-data-crawl-run-us --network host $newimages

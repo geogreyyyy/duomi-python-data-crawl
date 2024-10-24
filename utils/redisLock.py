@@ -31,7 +31,7 @@ def acquire_lock(lock_name, args=None, acquire_timeout=30, time_out=120):
             elif redis_client.ttl(lock_name) == -1:
                 redis_client.expire(lock_name, time_out)
 
-        except (ConnectionError, TimeoutError) as e:
+        except Exception as e:
             print(f"Error: {str(e)}. Attempting to reconnect...")
             # Try reconnecting the Redis client
             try:

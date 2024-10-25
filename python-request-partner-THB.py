@@ -39,8 +39,8 @@ redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
 # log初始化
-logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
-log_creator = log.Logger('tiktok-shop-partner.log', level='INFO')
+logging = log.Logger("TikTok用户画像THB-" + str(otherStyleTime) + '.log', level='INFO')
+log_creator = log.Logger('tiktok-shop-partner-THB.log', level='INFO')
 # 全局状态变量
 tiktok_shop_request_enable = True
 creator_marketplace_pagination = {}

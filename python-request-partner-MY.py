@@ -11,6 +11,7 @@ import log
 from utils import insertUtils
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
+from config import UserFilter
 from utils import redisLock
 from utils import sendFeiShuMsg
 
@@ -169,6 +170,9 @@ def get_tiktok_user_data(user_unique_id_list):
                 continue
             user_data = user_info.get("user")
             user_state = user_info.get('stats')
+            if user_state.get("followerCount", 0) < UserFilter.follower_count:
+                # 粉丝数量太少,不爬取
+                continue
             data = set_user_info(user_data, user_state, create_user)
             warit_excel_data[unique_id] = {}
             warit_excel_data[unique_id]["creator_user"] = data["creator_user"]

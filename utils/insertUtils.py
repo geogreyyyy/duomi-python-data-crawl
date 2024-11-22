@@ -1,14 +1,13 @@
+import json
+import re
+import sys
 import time
 
-import log
-import json
 import redis
-import sys
 
-import re
+import log
 
 sys.path.append("..")
-from utils import createTableUtils
 from utils import tagsEnums as tagsEnums
 from utils import redisLock
 from config import RedisKeyConstants as RedisKeyConstants
@@ -34,6 +33,7 @@ def update_creator_user(data):
         SET creator_oecuid = %(creator_oecuid)s,  
             unique_id = %(handle)s, 
             units_sold_range = %(units_sold_range)s,  
+            units_sold = %(units_sold)s,  
             selection_region = %(selection_region)s,  
             med_gmv_revenue_range = %(med_gmv_revenue_range)s,  
             creator_bind_mcn_name = %(creator_bind_mcn_name)s,  
@@ -108,9 +108,9 @@ def insert_creator_user(data):
     mysql = Mysql()
     creator_user = data["creator_user"]
     creator_user_insert_sql = f"""INSERT INTO `TIKTOK_CREATOR_USER_INFO{table_name_add}`(user_id,creator_oecuid,
-    unique_id,units_sold_range,selection_region,med_gmv_revenue_range,creator_bind_mcn_name,industry_groups,
+    unique_id,units_sold_range,units_sold,selection_region,med_gmv_revenue_range,creator_bind_mcn_name,industry_groups,
     top_follower_gender,top_follower_ages,follower_cnt,top_follower_age,video_avg_view_cnt,create_by,create_time) 
-    VALUES(%(user_id)s, %(creator_oecuid)s, %(handle)s,%(units_sold_range)s,%(selection_region)s,
+    VALUES(%(user_id)s, %(creator_oecuid)s, %(handle)s,%(units_sold_range)s,%(units_sold)s,%(selection_region)s,
     %(med_gmv_revenue_range)s,%(creator_bind_mcn_name)s,%(industry_groups)s, %(top_follower_gender)s,
     %(top_follower_ages)s,%(follower_cnt)s, %(top_follower_age)s, %(video_avg_view_cnt)s,'python-tiktok-shop-partner','{time.strftime('%Y-%m-%d %H:%M:%S')}' )"""
     try:
@@ -240,6 +240,7 @@ def get_table_index(data_num):
 
 def insert_data(data, unique_id_list):
     insert_num = 0
+    update_num = 0
     if len(data) == 0:
         return insert_num
     get_table_index(len(data))
@@ -251,15 +252,19 @@ def insert_data(data, unique_id_list):
                 try:
                     if data.get(handle) is None:
                         continue
-                    insert_creator_user(data[handle])
-                    insert_num = insert_num + 1
-                    redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
+                    if redis_client.get(RedisKeyConstants.redis_user_info_key + handle) is None:
+                        insert_creator_user(data[handle])
+                        insert_num = insert_num + 1
+                        redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
+                    else:
+                        update_creator_user(data[handle])
+                        update_num = update_num + 1
                 except Exception as ex:
                     logging.logger.error(handle + "出错!")
                     logging.logger.error(ex)
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
-    return insert_num
+    return [insert_num, update_num]
 
 
 def insert_data_creator_marketplace(data):
@@ -312,3 +317,101 @@ def record_data(data, unique_id_list):
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     return [insert_num, update_num]
+
+
+# 设置用户属性
+def set_user_info_partner(user_data, user_stats, create_user_info):
+    resp_data = {}
+    if user_data is None:
+        return {}
+    else:
+        resp_data_user_data = {}
+        resp_data_user_stats = {}
+        resp_data_creator_data = {}
+        user_email = re.search(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
+                               user_data.get('signature'), 0)
+        if user_email is not None:
+            resp_data_user_data["signature"] = user_email.group()
+        else:
+            resp_data_user_data["signature"] = ""
+        try:
+            resp_data_user_data["id"] = user_data.get('id')
+            resp_data_user_data["unique_id"] = user_data.get('uniqueId')
+            resp_data_user_data["nickname"] = user_data.get('nickname')
+            resp_data_user_data["avatar_larger"] = user_data.get('avatarLarger')
+            resp_data_user_data["avatar_medium"] = user_data.get('avatarMedium')
+            resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
+            resp_data_user_data["region"] = user_data.get('region')
+            resp_data_user_data["sec_uid"] = user_data.get('secUid')
+            resp_data_user_data["bio_link"] = json.dumps(user_data.get('bioLink', ''))
+            # create_user_info
+            resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid').get("value", "")
+            resp_data_creator_data["user_id"] = user_data.get('id')
+            resp_data_creator_data["handle"] = create_user_info.get('handle').get("value", "")
+            if create_user_info.get('is_authorized') is not None:
+                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized').get("value",
+                                                                                                         "") else 2
+            # 成交件大概范围
+            if create_user_info.get('units_sold_range') is not None:
+                resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range').get("value", "")
+            # 成交件数
+            if create_user_info.get('units_sold') is not None:
+                resp_data_creator_data["units_sold"] = create_user_info.get('units_sold').get("value", "")
+            if create_user_info.get('selection_region') is not None:
+                resp_data_creator_data["selection_region"] = create_user_info.get('selection_region').get("value", "")
+            # GMV大概范围
+            if create_user_info.get('med_gmv_revenue_range') is not None:
+                resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range').get(
+                    "value",
+                    "")
+            # GMV详细数据
+            if create_user_info.get('med_gmv_revenue') is not None and create_user_info.get('med_gmv_revenue').get(
+                    "is_authorized"):
+                resp_data_creator_data["med_gmv_revenue"] = create_user_info.get('med_gmv_revenue').get("value").get(
+                    "value", 0)
+            # MCN机构
+            resp_data_creator_data["creator_bind_mcn_name"] = ''
+            if create_user_info.get('creator_bind_mcn_name') is not None:
+                creator_bind_mcn_name = create_user_info.get('creator_bind_mcn_name')
+                if creator_bind_mcn_name.get("value") is not None:
+                    resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(
+                        create_user_info.get('creator_bind_mcn_name').get("value", ""))
+            # 达人兴趣标签
+            resp_data_creator_data["industry_groups"] = ''
+            if create_user_info.get('category') is not None:
+                industry_groups = []
+                category_value = create_user_info.get('category').get("value", [])
+                for name in category_value:
+                    industry_groups.append(name["name"])
+                resp_data_creator_data["industry_groups"] = ",".join(industry_groups)
+            if create_user_info.get('top_follower_gender') is not None:
+                resp_data_creator_data["top_follower_gender"] = json.dumps(
+                    create_user_info.get('top_follower_gender').get("value", ""))
+            if create_user_info.get('top_follower_ages') is not None:
+                resp_data_creator_data["top_follower_ages"] = ",".join(
+                    create_user_info.get('top_follower_ages').get("value", ""))
+            if create_user_info.get('follower_cnt') is not None:
+                resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt').get("value", "")
+            if create_user_info.get('top_follower_age') is not None:
+                resp_data_creator_data["top_follower_age"] = json.dumps(
+                    create_user_info.get('top_follower_age').get("value", ""))
+            if create_user_info.get('video_avg_view_cnt') is not None:
+                resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt').get("value",
+                                                                                                              "")
+            if user_stats is not None:
+                # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
+                resp_data_user_stats["follower_count"] = user_stats.get('followerCount')
+                resp_data_user_stats["following_count"] = user_stats.get('followingCount')
+                resp_data_user_stats["heart"] = user_stats.get('heart')
+                resp_data_user_stats["heart_count"] = user_stats.get('heartCount')
+                resp_data_user_stats["video_count"] = user_stats.get('videoCount')
+                resp_data_user_stats["digg_count"] = user_stats.get('diggCount')
+                resp_data_user_stats["friend_count"] = user_stats.get('friendCount')
+                resp_data_user_stats["user_id"] = user_data.get('id')
+        except Exception as ex:
+            logging.logger.error(ex)
+        finally:
+            resp_data["creator_user"] = resp_data_creator_data
+            resp_data["user_data"] = resp_data_user_data
+            resp_data["user_stats"] = resp_data_user_stats
+            return resp_data

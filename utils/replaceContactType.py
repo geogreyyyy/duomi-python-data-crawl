@@ -27,7 +27,7 @@ sellerContactFields = [{
 }
 ]
 
-# TAP后台字段代码 ：数据库字段
+# Partner TAP后台字段代码 ：数据库字段
 sellerContactMap = {
     3: "whatsapp",
     1: "whatsapp",
@@ -37,4 +37,10 @@ sellerContactMap = {
     34: "viber_number",
     32: "zalo_number",
     31: "line_number",
+}
+
+# Affiliate 后台字段代码 ：数据库字段
+affiliateContactMap = {
+    1: "whatsapp",
+    2: "email",
 }

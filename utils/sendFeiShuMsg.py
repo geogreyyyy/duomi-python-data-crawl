@@ -1,9 +1,8 @@
 import base64
 import hashlib
 import hmac
-import time
-import json
 import socket
+import time
 
 import requests
 
@@ -26,9 +25,7 @@ def setFeiShuMsg(msg):
     headers = {
         "Content-Type ": "application/json"
     }
-    response_tiktok_shop_user_unique_ids = requests.post(url, json=body, headers=headers, timeout=20)
-    res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
-    print(res_data)
+    requests.post(url, json=body, headers=headers, timeout=20)
 
 
 def gen_sign(timestamp, secret):
@@ -42,4 +39,3 @@ def gen_sign(timestamp, secret):
 
 if __name__ == '__main__':
     setFeiShuMsg("越南爬取失败")
-

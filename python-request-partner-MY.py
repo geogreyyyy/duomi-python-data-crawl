@@ -157,6 +157,7 @@ def get_tiktok_user_data(user_unique_id_list):
             continue
         # 获取页面原始编码格式
         page_text = response.text
+        response.close()
         tree = etree.HTML(page_text)
         li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
         try:
@@ -247,7 +248,9 @@ def get_tiktok_shop_user_unique_id():
                                                              headers=headers, timeout=60)
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
+            response_tiktok_shop_user_unique_ids.close()
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
+        response_tiktok_shop_user_unique_ids.close()
     except Exception as ex:
         logging.logger.error(ex)
         logging.logger.error("\033[31mTikTok Shop平台获取失败，请检查网络!'\033[0m")

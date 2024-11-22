@@ -1,17 +1,18 @@
 # coding:utf-8
 
-import requests
-from lxml import etree
 import json
 import time
-import re
-import redis
 from concurrent.futures import ThreadPoolExecutor
+
+import redis
+import requests
+from lxml import etree
+
 import log
-from utils import insertUtils
-from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
+from config import RedisKeyConstants as RedisKeyConstants
 from config import UserFilter
+from utils import insertUtils
 from utils import redisLock
 from utils import sendFeiShuMsg
 
@@ -47,93 +48,6 @@ tiktok_shop_request_enable = True
 creator_marketplace_pagination = {}
 
 
-# 设置用户属性
-def set_user_info(user_data, user_stats, create_user_info):
-    resp_data = {}
-    if user_data is None:
-        return {}
-    else:
-        resp_data_user_data = {}
-        resp_data_user_stats = {}
-        resp_data_creator_data = {}
-        user_email = re.search(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
-                               user_data.get('signature'), 0)
-        if user_email is not None:
-            resp_data_user_data["signature"] = user_email.group()
-        else:
-            resp_data_user_data["signature"] = ""
-        try:
-            resp_data_user_data["id"] = user_data.get('id')
-            resp_data_user_data["unique_id"] = user_data.get('uniqueId')
-            resp_data_user_data["nickname"] = user_data.get('nickname')
-            resp_data_user_data["avatar_larger"] = user_data.get('avatarLarger')
-            resp_data_user_data["avatar_medium"] = user_data.get('avatarMedium')
-            resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
-            resp_data_user_data["region"] = user_data.get('region')
-            resp_data_user_data["sec_uid"] = user_data.get('secUid')
-            resp_data_user_data["bio_link"] = json.dumps(user_data.get('bioLink', ''))
-            # create_user_info
-            resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid').get("value", "")
-            resp_data_creator_data["user_id"] = user_data.get('id')
-            resp_data_creator_data["handle"] = create_user_info.get('handle').get("value", "")
-            if create_user_info.get('is_authorized') is not None:
-                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized').get("value",
-                                                                                                         "") else 2
-            if create_user_info.get('units_sold_range') is not None:
-                resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range').get("value", "")
-            if create_user_info.get('selection_region') is not None:
-                resp_data_creator_data["selection_region"] = create_user_info.get('selection_region').get("value", "")
-            if create_user_info.get('med_gmv_revenue_range') is not None:
-                resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range').get(
-                    "value",
-                    "")
-            # MCN机构
-            resp_data_creator_data["creator_bind_mcn_name"] = ''
-            if create_user_info.get('creator_bind_mcn_name') is not None:
-                creator_bind_mcn_name = create_user_info.get('creator_bind_mcn_name')
-                if creator_bind_mcn_name.get("value") is not None:
-                    resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(
-                        create_user_info.get('creator_bind_mcn_name').get("value", ""))
-            # 达人兴趣标签
-            resp_data_creator_data["industry_groups"] = ''
-            if create_user_info.get('industry_groups') is not None:
-                industry_groups = create_user_info.get('industry_groups')
-                if industry_groups.get('value') is not None:
-                    resp_data_creator_data["industry_groups"] = json.dumps(
-                        create_user_info.get('industry_groups').get("value", ""))
-            if create_user_info.get('top_follower_gender') is not None:
-                resp_data_creator_data["top_follower_gender"] = json.dumps(
-                    create_user_info.get('top_follower_gender').get("value", ""))
-            if create_user_info.get('top_follower_ages') is not None:
-                resp_data_creator_data["top_follower_ages"] = ",".join(
-                    create_user_info.get('top_follower_ages').get("value", ""))
-            if create_user_info.get('follower_cnt') is not None:
-                resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt').get("value", "")
-            if create_user_info.get('top_follower_age') is not None:
-                resp_data_creator_data["top_follower_age"] = json.dumps(
-                    create_user_info.get('top_follower_age').get("value", ""))
-            if create_user_info.get('video_avg_view_cnt') is not None:
-                resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt').get("value",
-                                                                                                              "")
-            if user_stats is not None:
-                # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
-                resp_data_user_stats["follower_count"] = user_stats.get('followerCount')
-                resp_data_user_stats["following_count"] = user_stats.get('followingCount')
-                resp_data_user_stats["heart"] = user_stats.get('heart')
-                resp_data_user_stats["heart_count"] = user_stats.get('heartCount')
-                resp_data_user_stats["video_count"] = user_stats.get('videoCount')
-                resp_data_user_stats["digg_count"] = user_stats.get('diggCount')
-                resp_data_user_stats["friend_count"] = user_stats.get('friendCount')
-                resp_data_user_stats["user_id"] = user_data.get('id')
-        except Exception as ex:
-            logging.logger.error(ex)
-        finally:
-            resp_data["creator_user"] = resp_data_creator_data
-            resp_data["user_data"] = resp_data_user_data
-            resp_data["user_stats"] = resp_data_user_stats
-            return resp_data
-
-
 # 爬取tiktok主页
 def get_tiktok_user_data(user_unique_id_list):
     warit_excel_data = {}
@@ -157,6 +71,7 @@ def get_tiktok_user_data(user_unique_id_list):
             continue
         # 获取页面原始编码格式
         page_text = response.text
+        response.close()
         tree = etree.HTML(page_text)
         li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
         try:
@@ -173,7 +88,7 @@ def get_tiktok_user_data(user_unique_id_list):
             if user_state.get("followerCount", 0) < UserFilter.follower_count:
                 # 粉丝数量太少,不爬取
                 continue
-            data = set_user_info(user_data, user_state, create_user)
+            data = insertUtils.set_user_info_partner(user_data, user_state, create_user)
             warit_excel_data[unique_id] = {}
             warit_excel_data[unique_id]["creator_user"] = data["creator_user"]
             warit_excel_data[unique_id]["user_data"] = data["user_data"]
@@ -187,36 +102,6 @@ def get_tiktok_user_data(user_unique_id_list):
             continue
         redis_client.set(redis_key_tik_tok_request_error_num, 0)
     return warit_excel_data
-
-
-# 把总数据量拆分成50每页的数据
-def paginate(total_pages, pages_per_range):
-    ranges = []
-    for i in range(1, int(total_pages) // pages_per_range + 1):
-        # 计算当前范围的起始和结束页码
-        start_page = i
-        ranges.append((start_page, 50))
-    if len(ranges) * 50 < int(total_pages):
-        ranges.append([str(len(ranges) + 1), '50'])
-    return ranges
-
-
-# 分割用户id列表给多线程
-def paginate_user_id_list(total, N):
-    if N <= 0:
-        raise ValueError("N必须大于0")
-    pages_per_range = total // N
-    remainder = total % N
-    ranges = []
-    start = 1
-    for i in range(N):
-        if i == N - 1:
-            end = start + pages_per_range + remainder - 1
-        else:
-            end = start + pages_per_range - 1
-        ranges.append((start - 1, end - 1))
-        start = end + 1
-    return ranges
 
 
 # 从tiktok shop平台获取unique id列表
@@ -248,9 +133,9 @@ def get_tiktok_shop_user_unique_id():
         res_data = json.loads(response_tiktok_shop_user_unique_ids.text)
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
             raise Exception("TikTok Shop平台获取失败，请检查网络!")
+        response_tiktok_shop_user_unique_ids.close()
     except Exception as ex:
         logging.logger.error(ex)
-        logging.logger.error("\033[31mTikTok Shop平台获取失败，请检查网络!'\033[0m")
         # 失败计数，超过10次失败结束
         redis_client.incr(redis_key_error_num, 1)
         return [[], False]
@@ -314,14 +199,10 @@ def start():
             if user_list is None:
                 continue
             # 固定8个线程
-            insert_num = 0
-            ranges = paginate_user_id_list(len(user_list), 2)
-            thread1 = pool.submit(get_tiktok_user_data, user_list[ranges[0][0]:ranges[0][1]])
-            insert_num = insert_num + insertUtils.insert_data(thread1.result(), user_list[ranges[0][0]:ranges[0][1]])
-            thread2 = pool.submit(get_tiktok_user_data, user_list[ranges[1][0]:ranges[1][1]])
-            insert_num = insert_num + insertUtils.insert_data(thread2.result(), user_list[ranges[1][0]:ranges[1][1]])
+            thread1 = pool.submit(get_tiktok_user_data, user_list)
+            insert_num = insertUtils.insert_data(thread1.result(), user_list)
             log_creator.logger.info(
-                f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条。")
+                f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num[0]}条,更新{insert_num[1]}。")
         except Exception as ex:
             log_creator.logger.error(ex)
 

@@ -1,7 +1,7 @@
 import json
 import sys
 import time
-
+import pymysql
 sys.path.append("..")
 from MySqlCon import Mysql
 from utils import replaceContactType
@@ -43,16 +43,27 @@ def setIdUpdateIng(userIdList):
 
 # 获取没有二次采集联系方式的达人创造者Id列表
 def get_no_request_seller_contact_id():
-    mysql = Mysql()
-    sql = f"""SELECT user_id,creator_oecuid FROM tiktok_creator_user_info WHERE user_id IN ( SELECT id FROM tiktok_user_info WHERE is_request IS NULL AND region !='US' ORDER BY create_time DESC)   LIMIT 20"""
-    request_data_list = mysql.getAll(sql)
-    userIdList = []
-    for data in request_data_list:
-        userIdList.append("\"" + str(data['user_id']) + "\"")
-    mysql.dispose()
-    setIdUpdateIng(userIdList)
-    # print(request_data_list)
-    return request_data_list
+    max_retries = 3  # Maximum number of reconnection attempts
+    retry_delay = 5  # Delay in seconds between retries
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            mysql = Mysql()  # Assuming Mysql() is your custom database wrapper
+            sql = """SELECT user_id, creator_oecuid FROM tiktok_creator_user_info WHERE user_id IN (SELECT id FROM tiktok_user_info WHERE is_request IS NULL AND region != 'US' ORDER BY create_time DESC ) LIMIT 20"""
+            request_data_list = mysql.getAll(sql)  # Fetch data
+            userIdList = ["\"" + str(data['user_id']) + "\"" for data in request_data_list]
+            mysql.dispose()
+            setIdUpdateIng(userIdList)  # Assuming setIdUpdateIng is a valid function
+            return request_data_list
+        except pymysql.MySQLError as e:
+            print(f"getSQLDataUtils.py-get_no_request_seller_contact_id: Database connection error: {e}")
+            attempt += 1
+            if attempt < max_retries:
+                print(f"getSQLDataUtils.py-get_no_request_seller_contact_id: Retrying connection ({attempt}/{max_retries}) in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("getSQLDataUtils.py-get_no_request_seller_contact_id: Max retries reached. Could not connect to the database.")
+                raise
 
 
 # 获取没有二次采集联系方式的达人创造者Id列表 附带国家

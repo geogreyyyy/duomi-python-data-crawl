@@ -30,14 +30,10 @@ thread_num = 2
 redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
                            password=Config.REDIS_PASSWORD)
 # redis异常状态
-redis_key_error_num = RedisKeyConstants.redis_key_error_num
-redis_key_response_num = RedisKeyConstants.redis_key_response_num
 redis_key_tik_tok_request_error_num = RedisKeyConstants.redis_key_tik_tok_request_error_num
 # redis请求状态
 
 # redis状态初始化
-redis_client.set(redis_key_error_num, 0)
-redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
 # log初始化
@@ -136,11 +132,7 @@ def get_tiktok_shop_user_unique_id():
         response_tiktok_shop_user_unique_ids.close()
     except Exception as ex:
         logging.logger.error(ex)
-        logging.logger.error("\033[31mTikTok Shop平台获取失败，请检查网络!'\033[0m")
-        # 失败计数，超过10次失败结束
-        redis_client.incr(redis_key_error_num, 1)
         return [[], False]
-    redis_client.get(redis_key_error_num).decode()
     # 创作者Id列表
     creator_profile_list = res_data.get("creator_profile_list")
     # 分页数据

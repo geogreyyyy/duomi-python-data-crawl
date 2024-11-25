@@ -70,6 +70,7 @@ def get_tiktok_shop_user_unique_id(data):
         if response_tiktok_shop_user_unique_ids.status_code != 200 or res_data.get("code") != 0:
             raise Exception(str(res_data))
         response_tiktok_shop_user_unique_ids.close()
+
     except Exception as ex:
         logging.logger.error(ex)
         if str(ex) == "Expecting value: line 1 column 1 (char 0)":
@@ -113,6 +114,7 @@ def start():
             for data in user_data_list:
                 response_data = get_tiktok_shop_user_unique_id(data)
                 getSQLDataUtils.resetDataPartner(response_data, data.get('user_id', None))
+                time.sleep(1)
         except Exception as ex:
             logging.logger.error(ex)
             if str(ex) == 'too many request':

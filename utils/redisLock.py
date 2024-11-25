@@ -69,7 +69,7 @@ def release_lock(lock_name, identifire):
             pipe.unwatch()
             break
         except Exception as ex:
-            print(ex)
+            print(f"redisLock - release_lock:{ex}")
             time.sleep(10)
             # # 释放锁期间，有其他客户端改变了键值对，锁释放失败，进行循环
             pass

@@ -32,10 +32,15 @@ def update_creator_user(data):
         UPDATE `TIKTOK_CREATOR_USER_INFO{table_name_add}`
         SET creator_oecuid = %(creator_oecuid)s,  
             unique_id = %(handle)s, 
+            nickname = %(nickname)s, 
             units_sold_range = %(units_sold_range)s,  
+            thumb_url_list =%(thumb_url_list)s,  
+            top_video_data =%(top_video_data)s,  
+            url_list = %(url_list)s,
             units_sold = %(units_sold)s,  
             selection_region = %(selection_region)s,  
             med_gmv_revenue_range = %(med_gmv_revenue_range)s,  
+            med_gmv_revenue = %(med_gmv_revenue)s,  
             creator_bind_mcn_name = %(creator_bind_mcn_name)s,  
             industry_groups = %(industry_groups)s,  
             top_follower_gender = %(top_follower_gender)s,  
@@ -107,11 +112,11 @@ def update_creator_user(data):
 def insert_creator_user(data):
     mysql = Mysql()
     creator_user = data["creator_user"]
-    creator_user_insert_sql = f"""INSERT INTO `TIKTOK_CREATOR_USER_INFO{table_name_add}`(user_id,creator_oecuid,
-    unique_id,units_sold_range,units_sold,selection_region,med_gmv_revenue_range,creator_bind_mcn_name,industry_groups,
+    creator_user_insert_sql = f"""INSERT INTO `TIKTOK_CREATOR_USER_INFO{table_name_add}`(user_id,creator_oecuid,nickname,
+    unique_id,thumb_url_list,url_list,top_video_data,units_sold_range,units_sold,selection_region,med_gmv_revenue,med_gmv_revenue_range,creator_bind_mcn_name,industry_groups,
     top_follower_gender,top_follower_ages,follower_cnt,top_follower_age,video_avg_view_cnt,create_by,create_time) 
-    VALUES(%(user_id)s, %(creator_oecuid)s, %(handle)s,%(units_sold_range)s,%(units_sold)s,%(selection_region)s,
-    %(med_gmv_revenue_range)s,%(creator_bind_mcn_name)s,%(industry_groups)s, %(top_follower_gender)s,
+    VALUES(%(user_id)s, %(creator_oecuid)s, %(nickname)s, %(handle)s,%(thumb_url_list)s,%(url_list)s,%(top_video_data)s,%(units_sold_range)s,%(units_sold)s,%(selection_region)s,
+    %(med_gmv_revenue)s,%(med_gmv_revenue_range)s,%(creator_bind_mcn_name)s,%(industry_groups)s, %(top_follower_gender)s,
     %(top_follower_ages)s,%(follower_cnt)s, %(top_follower_age)s, %(video_avg_view_cnt)s,'python-tiktok-shop-partner','{time.strftime('%Y-%m-%d %H:%M:%S')}' )"""
     try:
         mysql.insertOne(creator_user_insert_sql, creator_user)
@@ -313,13 +318,16 @@ def record_data(data, unique_id_list):
                 except Exception as ex:
                     logging.logger.error(handle + "出错!")
                     logging.logger.error(ex)
+                    # 如果是主键冲突，写入redis
+                    if str(ex).find("Duplicate entry") != -1:
+                        redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
 
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     return [insert_num, update_num]
 
 
-# 设置用户属性
+# 设置用户属性 --------爬取达人数据
 def set_user_info_partner(user_data, user_stats, create_user_info):
     resp_data = {}
     if user_data is None:
@@ -348,6 +356,15 @@ def set_user_info_partner(user_data, user_stats, create_user_info):
             resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid').get("value", "")
             resp_data_creator_data["user_id"] = user_data.get('id')
             resp_data_creator_data["handle"] = create_user_info.get('handle').get("value", "")
+            resp_data_creator_data["nickname"] = create_user_info.get('nickname').get("value", "")
+            # 头像
+            avatar = create_user_info.get("avatar")
+            if avatar.get("is_authorized"):
+                resp_data_creator_data["thumb_url_list"] = json.dumps(avatar.get("value").get("thumb_url_list", {}))
+                resp_data_creator_data["url_list"] = json.dumps(avatar.get("value").get("url_list", {}))
+            else:
+                resp_data_creator_data["thumb_url_list"] = "[]"
+                resp_data_creator_data["url_list"] = "[]"
             if create_user_info.get('is_authorized') is not None:
                 resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized').get("value",
                                                                                                          "") else 2
@@ -365,10 +382,10 @@ def set_user_info_partner(user_data, user_stats, create_user_info):
                     "value",
                     "")
             # GMV详细数据
-            if create_user_info.get('med_gmv_revenue') is not None and create_user_info.get('med_gmv_revenue').get(
-                    "is_authorized"):
-                resp_data_creator_data["med_gmv_revenue"] = create_user_info.get('med_gmv_revenue').get("value").get(
-                    "value", 0)
+            if create_user_info.get('med_gmv_revenue').get("is_authorized"):
+                resp_data_creator_data["med_gmv_revenue"] = json.dumps(create_user_info.get('med_gmv_revenue').get("value"))
+            else:
+                resp_data_creator_data["med_gmv_revenue"] = "{}"
             # MCN机构
             resp_data_creator_data["creator_bind_mcn_name"] = ''
             if create_user_info.get('creator_bind_mcn_name') is not None:
@@ -384,6 +401,10 @@ def set_user_info_partner(user_data, user_stats, create_user_info):
                 for name in category_value:
                     industry_groups.append(name["name"])
                 resp_data_creator_data["industry_groups"] = ",".join(industry_groups)
+            # 视频信息
+            if create_user_info.get("top_video_data").get("is_authorized"):
+                resp_data_creator_data["top_video_data"] = json.dumps(
+                    create_user_info.get("top_video_data").get("value", {}))
             if create_user_info.get('top_follower_gender') is not None:
                 resp_data_creator_data["top_follower_gender"] = json.dumps(
                     create_user_info.get('top_follower_gender').get("value", ""))

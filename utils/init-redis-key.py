@@ -79,10 +79,10 @@ def insert_search_key_sql():
 
 def init_redis_search_key():
     result = insert_search_key_sql()
-    redis_client.delete("tiktok_shop_partner_center_VN_search_key")
+    redis_client.delete("tiktok_shop_partner_center_PH_search_key")
     r = redis_client.pipeline()
     for item in result:
-        r.lpush("tiktok_shop_partner_center_VN_search_key", item["search_key"])
+        r.lpush("tiktok_shop_partner_center_PH_search_key", item["search_key"])
     r.execute()
 
 

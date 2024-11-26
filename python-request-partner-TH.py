@@ -41,8 +41,8 @@ redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
 # log初始化
-logging = log.Logger("TikTok用户画像THB-" + str(otherStyleTime) + '.log', level='INFO')
-log_creator = log.Logger('tiktok-shop-partner-THB.log', level='INFO')
+logging = log.Logger("TikTok用户画像TH-" + str(otherStyleTime) + '.log', level='INFO')
+log_creator = log.Logger('tiktok-shop-partner-TH.log', level='INFO')
 # 全局状态变量
 tiktok_shop_request_enable = True
 creator_marketplace_pagination = {}
@@ -108,13 +108,13 @@ def get_tiktok_user_data(user_unique_id_list):
 def get_tiktok_shop_user_unique_id():
     global creator_marketplace_pagination
     url = (
-        """https://api-partner-va.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?user_language=zh-CN&partner_id=7186596887363979014&aid=360019&app_name=i18n_ecom_alliance&device_id=0&fp=verify_m2imhdev_romWrU2P_h5ao_4Sz5_BcYq_4AsQu9AHfFAH&device_platform=web&cookie_enabled=true&screen_width=2195&screen_height=1235&browser_language=zh-CN&browser_platform=Win32&browser_name=Mozilla&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F129.0.0.0+Safari%2F537.36+Edg%2F129.0.0.0&browser_online=true&timezone_name=Etc%2FGMT-8"""
+        """https://api-partner-va.tiktokshop.com/api/v1/oec/affiliate/creator/marketplace/4partner/find?user_language=zh-CN&partner_id=8651580312286038790&aid=360019&app_name=i18n_ecom_alliance&device_id=0&fp=verify_m3wsnw07_pkwQAiVL_SfIW_4eR5_9DOq_i6wtXllefUky&device_platform=web&cookie_enabled=true&screen_width=2195&screen_height=1235&browser_language=zh-CN&browser_platform=Win32&browser_name=Mozilla&browser_version=5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36+(KHTML,+like+Gecko)+Chrome%2F129.0.0.0+Safari%2F537.36&browser_online=true&timezone_name=Etc%2FGMT-8"""
     )
     headers = {
         'accept': """application/json, text/plain, */*""",
         'accept-language': """en,zh-CN;q=0.9,zh;q=0.8""",
         'content-type': 'application/json',
-        'cookie': """passport_csrf_token=93e0b5c1caada84753739a3483d31605; passport_csrf_token_default=93e0b5c1caada84753739a3483d31605; csrf_session_id=bb7ca49ab03bdb139090a878024bebd9; d_ticket=d17d0dec45f82d42ba1404d9276585d25b2b7; sid_guard=cde79f05053ba593e1f577302c0cbd21%7C1729491478%7C5183998%7CFri%2C+20-Dec-2024+06%3A17%3A56+GMT; uid_tt=0659dcbdda605522df8c14f10e96cd47a712116b1750fb7539e7861e269905c5; uid_tt_ss=0659dcbdda605522df8c14f10e96cd47a712116b1750fb7539e7861e269905c5; sid_tt=cde79f05053ba593e1f577302c0cbd21; sessionid=cde79f05053ba593e1f577302c0cbd21; sessionid_ss=cde79f05053ba593e1f577302c0cbd21; sid_ucp_v1=1.0.0-KGIyNjgyNGQwNGQwMDVmMzFlYmJkMjhhZmI0NzBmNzc1Zjk4NmVmMzIKGwiGiL_Go7v8imcQluTXuAYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGNkZTc5ZjA1MDUzYmE1OTNlMWY1NzczMDJjMGNiZDIx; ssid_ucp_v1=1.0.0-KGIyNjgyNGQwNGQwMDVmMzFlYmJkMjhhZmI0NzBmNzc1Zjk4NmVmMzIKGwiGiL_Go7v8imcQluTXuAYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGNkZTc5ZjA1MDUzYmE1OTNlMWY1NzczMDJjMGNiZDIx; msToken=_L0kHwhgON7qp-rykP1G3umRXcgVUCXatYn7nr46vqRO2_T1qtGNna5D9rVk6k6tqXWw76GI0_BETWjI5hi14Msmefo7mVZApTFo0Wfemqt67eAw1U_g0O9-7uRwJQchRWI0qm7e; TTSPC_Side_Menu_Role=7; odin_tt=a25bd588d8091282bbe08b49527c9a01088ba643360fa840fb7bfbde9abe9e88c1a4b60ef586d9eafc3471a31c7d1c9e0dd6e98ffd655efd1fa661d8016d6755; ttwid=1%7CwXqPCsH4mgdnVtPmRW5UT_DkQ8bByEV1DmaL1JRrLyU%7C1729491508%7C5426be3233d094ec1aa3fd3708b1ee8440739d6cec5f59e6956b63828c070943""",
+        'cookie': """_ga=GA1.1.785161422.1732175154; _fbp=fb.1.1732175154686.851785016117250198; _tt_enable_cookie=1; _ttp=mTjpMGo3tkazKxhSeqvIiXy0uFC.tt.1; passport_csrf_token=c240a37432dcb7272d60836f5adfa2cf; passport_csrf_token_default=c240a37432dcb7272d60836f5adfa2cf; sid_guard=e463704005c7b7a3127e891e930cc61a%7C1732175527%7C5183996%7CMon%2C+20-Jan-2025+07%3A52%3A03+GMT; uid_tt=6e550bdcbeaf9b29441dcb484f54a85b6eba27084dfee4ce8f8d00e288c83ec9; uid_tt_ss=6e550bdcbeaf9b29441dcb484f54a85b6eba27084dfee4ce8f8d00e288c83ec9; sid_tt=e463704005c7b7a3127e891e930cc61a; sessionid=e463704005c7b7a3127e891e930cc61a; sessionid_ss=e463704005c7b7a3127e891e930cc61a; sid_ucp_v1=1.0.0-KDQ4ZjEyMDA3MWZjYzA3MzM1OWUxMGNlNzFmZmE1ODU2NzQyYmM4MGYKGwi3iI7i1Mi5n2cQp837uQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGU0NjM3MDQwMDVjN2I3YTMxMjdlODkxZTkzMGNjNjFh; ssid_ucp_v1=1.0.0-KDQ4ZjEyMDA3MWZjYzA3MzM1OWUxMGNlNzFmZmE1ODU2NzQyYmM4MGYKGwi3iI7i1Mi5n2cQp837uQYYofoVIAw4AUDrBxADGgZtYWxpdmEiIGU0NjM3MDQwMDVjN2I3YTMxMjdlODkxZTkzMGNjNjFh; msToken=uVbfePlBdQL3e3mfiUWfWfvZIf2oYWj4x63YHLXwy76HRFUrL30x8Jpy6rcWXx0cmsi2ux29T9q20PjsCFce1g-JEw7x_WRP97n3AlFrXudZQfeWDTso4fQ5QEfcwfE_27hwuNYA; odin_tt=5d038aca1e80a243323367dde70caa2303023b7c223826f3ee6334c8cba228130ab2bb91ffba97fd95323016ca58f852f0d2d13278e490de5695bd0274923c4a; _ga_BZBQ2QHQSP=GS1.1.1732525017.5.0.1732525017.0.0.0; TTSPC_Side_Menu_Role=0; csrf_session_id=e06e51fe4233df9c5475f2ae65d9426d; ttwid=1%7C5pjKQSmC_JtrZB6_CQ41OG8qwOj2ZeJ1_v6TiTgpLbc%7C1732525044%7C35d96a8a09718e6b8305b60e109b87c8faf5e64bee1b4922463c6729e33d809c""",
         'priority': 'u=1, i',
         'origin': 'https://partner.tiktokshop.com',
         'referer': 'https://partner.tiktokshop.com/',
@@ -156,8 +156,8 @@ def get_tiktok_shop_user_unique_id():
 
 
 def start():
-    lock_key = "tiktok_shop_partner_center_THB_lock_search_key"
-    search_key = "tiktok_shop_partner_center_THB_search_key"
+    lock_key = "tiktok_shop_partner_center_TH_lock_search_key"
+    search_key = "tiktok_shop_partner_center_TH_search_key"
     while True:
         lock = redisLock.acquire_lock(lock_key)
         enum = None

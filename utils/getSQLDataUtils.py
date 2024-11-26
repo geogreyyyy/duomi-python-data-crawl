@@ -1,7 +1,9 @@
 import json
 import sys
 import time
+
 import pymysql
+
 sys.path.append("..")
 from MySqlCon import Mysql
 from utils import replaceContactType
@@ -59,10 +61,12 @@ def get_no_request_seller_contact_id():
             print(f"getSQLDataUtils.py-get_no_request_seller_contact_id: Database connection error: {e}")
             attempt += 1
             if attempt < max_retries:
-                print(f"getSQLDataUtils.py-get_no_request_seller_contact_id: Retrying connection ({attempt}/{max_retries}) in {retry_delay} seconds...")
+                print(
+                    f"getSQLDataUtils.py-get_no_request_seller_contact_id: Retrying connection ({attempt}/{max_retries}) in {retry_delay} seconds...")
                 time.sleep(retry_delay)
             else:
-                print("getSQLDataUtils.py-get_no_request_seller_contact_id: Max retries reached. Could not connect to the database.")
+                print(
+                    "getSQLDataUtils.py-get_no_request_seller_contact_id: Max retries reached. Could not connect to the database.")
                 raise
 
 
@@ -223,10 +227,60 @@ def tap_user_list(creator_oecuid, index=0):
     return cookie_list[index]
 
 
+def is_valid_json(string):
+    try:
+        json.loads(string)
+        return True
+    except ValueError:
+        return False
+
 if __name__ == '__main__':
     # get_no_request_seller_contact_id()
     # data = [{'field': 1, 'value': '349393849', 'title': None}]
     # user_id = 308076
     # resetDataAffiliate(data, user_id)
-
-    print(tap_user_list("123", 1))
+    mysql = Mysql()
+    # select_sql = f"SELECT industry_groups FROM tiktok_creator_user_info GROUP BY industry_groups limit 10"
+    # resp = mysql.getAll(select_sql)
+    resp = [
+        {'industry_groups': 'Beauty & Personal Care'},
+        {'industry_groups': ''},
+        {'industry_groups': '{"value": [{"starling_key": "magellan_700437", "name": "Food & Beverages"}, {"starling_key": "magellan_700645", "name": "Health"}, {"starling_key": "magellan_601739", "name": "Phones & Electronics"}], "is_authorized": True, "status": 0}'},
+        {'industry_groups': '{"value": [{"starling_key": "magellan_700437", "name": "Food & Beverages"}, {"starling_key": "magellan_601450", "name": "Beauty & Personal Care"}, {"starling_key": "magellan_605248", "name": "Fashion Accessories"}], "is_authorized": True, "status": 0}'},
+        {'industry_groups': 'Fashion Accessories'},
+        {'industry_groups': 'Daily Life,Travel'},
+        {'industry_groups': 'Kitchenware,Beauty & Personal Care,Sports & Outdoor,other'},
+        {'industry_groups': '{"value": [{"starling_key": "magellan_601450", "name": "Beauty & Personal Care"}, {"starling_key": "magellan_601152", "name": "Womenswear & Underwear"}, {"starling_key": "magellan_605248", "name": "Fashion Accessories"}], "is_authorized": True, "status": 0}'},
+        {'industry_groups': '{"value": [{"starling_key": "magellan_601152", "name": "Womenswear & Underwear"}, {"starling_key": "magellan_603014", "name": "Sports & Outdoor"}, {"starling_key": "magellan_605248", "name": "Fashion Accessories"}], "is_authorized": True, "status": 0}'},
+        {'industry_groups': '{"value": [{"starling_key": "magellan_700645", "name": "Health"}, {"starling_key": "magellan_603014", "name": "Sports & Outdoor"}], "is_authorized": True, "status": 0}'}
+    ]
+    for data in resp:
+        industry = data['industry_groups']
+        if not industry:  # 跳过空字符串
+            print("unknown")
+            continue
+        try:
+            # 判断是否为 JSON 格式
+            if is_valid_json(industry):
+                indu_json = json.loads(industry)
+                indu_name_arr = []
+                if "value" in indu_json:
+                    for value in indu_json["value"]:
+                        indu_name_arr.append(value.get("name", "other"))
+                    indu_save_str = ",".join(indu_name_arr)
+                else:
+                    indu_save_str = "unknown"
+            else:
+                # 普通字符串直接返回
+                indu_save_str = industry
+            print(indu_save_str)
+            # update_sql = f"""UPDATE tiktok_creator_user_info SET industry_groups = '{indu_save_str}' WHERE industry_groups = '{industry}' """
+            # # print(update_sql)
+            # mysql.update(update_sql)
+            # mysql.dispose()
+        except Exception as ex:
+            print(f"Error: {ex}, Industry: {industry}")
+            continue
+        # finally:
+            # print(f"转换失败------------------:{ex},{industry}")
+        print("------------------------split----------------------------------------")

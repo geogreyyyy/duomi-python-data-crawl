@@ -1,23 +1,20 @@
 # coding:utf-8
 
-import requests
-from lxml import etree
 import json
 import time
-import re
-import redis
 from concurrent.futures import ThreadPoolExecutor
+
+import redis
+import requests
+from lxml import etree
+
 import log
-from utils import insertUtils
-from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
+from config import RedisKeyConstants as RedisKeyConstants
+from utils import insertUtils
 from utils import redisLock
 from utils import sendFeiShuMsg
-# 时间格式化
-timeArray = time.localtime(time.time())
-otherStyleTime = time.strftime("%Y%m%d", timeArray)
-numStyleTime = time.strftime("%H%M%S", timeArray)
-time_default_range = str(otherStyleTime)
+
 
 # 线程池初始化
 pool = ThreadPoolExecutor(max_workers=8)
@@ -26,6 +23,7 @@ thread_num = 2
 # redis初始化
 redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
                            password=Config.REDIS_PASSWORD)
+# 搜索的key来自java端，需要重新创建一个链接到1数据库
 redis_search_key_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=1,
                                       password=Config.REDIS_PASSWORD)
 # redis异常状态
@@ -40,94 +38,10 @@ redis_client.set(redis_key_response_num, 0)
 redis_client.set(redis_key_tik_tok_request_error_num, 0)
 
 # log初始化
-logging = log.Logger("TikTok用户画像-" + str(otherStyleTime) + '.log', level='INFO')
-log_creator = log.Logger('tiktok-shop-partner.log', level='INFO')
+logging = log.Logger('record-creator.log', level='INFO')
 # 全局状态变量
 tiktok_shop_request_enable = True
-creator_marketplace_pagination ={}
-
-
-# 设置用户属性
-def set_user_info(user_data, user_stats, create_user_info):
-    resp_data = {}
-    if user_data is None:
-        return {}
-    else:
-        resp_data_user_data = {}
-        resp_data_user_stats = {}
-        resp_data_creator_data = {}
-        user_email = re.search(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
-                               user_data.get('signature'), 0)
-        if user_email is not None:
-            resp_data_user_data["signature"] = user_email.group()
-        else:
-            resp_data_user_data["signature"] = ""
-        try:
-            resp_data_user_data["id"] = user_data.get('id')
-            resp_data_user_data["unique_id"] = user_data.get('uniqueId')
-            resp_data_user_data["nickname"] = user_data.get('nickname')
-            resp_data_user_data["avatar_larger"] = user_data.get('avatarLarger')
-            resp_data_user_data["avatar_medium"] = user_data.get('avatarMedium')
-            resp_data_user_data["avatar_thumb"] = user_data.get('avatarThumb')
-            resp_data_user_data["region"] = user_data.get('region')
-            resp_data_user_data["sec_uid"] = user_data.get('secUid')
-            resp_data_user_data["bio_link"] = json.dumps(user_data.get('bioLink'))
-            # create_user_info
-            resp_data_creator_data["creator_oecuid"] = create_user_info.get('creator_oecuid')["value"]
-            resp_data_creator_data["user_id"] = user_data.get('id')
-            resp_data_creator_data["handle"] = create_user_info.get('handle')["value"]
-            if create_user_info.get('is_authorized') is not None:
-                resp_data_creator_data["is_authorized"] = 1 if create_user_info.get('is_authorized')["value"] else 2
-            if create_user_info.get('units_sold_range') is not None:
-                resp_data_creator_data["units_sold_range"] = create_user_info.get('units_sold_range')["value"]
-            if create_user_info.get('selection_region') is not None:
-                resp_data_creator_data["selection_region"] = create_user_info.get('selection_region')["value"]
-            if create_user_info.get('med_gmv_revenue_range') is not None:
-                resp_data_creator_data["med_gmv_revenue_range"] = create_user_info.get('med_gmv_revenue_range')["value"]
-            # MCN机构
-            resp_data_creator_data["creator_bind_mcn_name"] = ''
-            if create_user_info.get('creator_bind_mcn_name') is not None:
-                creator_bind_mcn_name = create_user_info.get('creator_bind_mcn_name')
-                if creator_bind_mcn_name.get("value") is not None:
-                    resp_data_creator_data["creator_bind_mcn_name"] = json.dumps(
-                        create_user_info.get('creator_bind_mcn_name')["value"])
-            # 达人兴趣标签
-            resp_data_creator_data["industry_groups"] = ''
-            if create_user_info.get('industry_groups') is not None:
-                industry_groups = create_user_info.get('industry_groups')
-                if industry_groups.get('value') is not None:
-                    resp_data_creator_data["industry_groups"] = json.dumps(
-                        create_user_info.get('industry_groups')["value"])
-            if create_user_info.get('top_follower_gender') is not None:
-                resp_data_creator_data["top_follower_gender"] = json.dumps(
-                    create_user_info.get('top_follower_gender')["value"])
-            if create_user_info.get('top_follower_ages') is not None:
-                resp_data_creator_data["top_follower_ages"] = ",".join(
-                    create_user_info.get('top_follower_ages')["value"])
-            if create_user_info.get('follower_cnt') is not None:
-                resp_data_creator_data["follower_cnt"] = create_user_info.get('follower_cnt')["value"]
-            if create_user_info.get('top_follower_age') is not None:
-                resp_data_creator_data["top_follower_age"] = json.dumps(
-                    create_user_info.get('top_follower_age')["value"])
-            if create_user_info.get('video_avg_view_cnt') is not None:
-                resp_data_creator_data["video_avg_view_cnt"] = create_user_info.get('video_avg_view_cnt')["value"]
-            if user_stats is not None:
-                # '粉丝数量', '关注数量', '点赞数', '发布视频数量'
-                resp_data_user_stats["follower_count"] = user_stats.get('followerCount')
-                resp_data_user_stats["following_count"] = user_stats.get('followingCount')
-                resp_data_user_stats["heart"] = user_stats.get('heart')
-                resp_data_user_stats["heart_count"] = user_stats.get('heartCount')
-                resp_data_user_stats["video_count"] = user_stats.get('videoCount')
-                resp_data_user_stats["digg_count"] = user_stats.get('diggCount')
-                resp_data_user_stats["friend_count"] = user_stats.get('friendCount')
-                resp_data_user_stats["user_id"] = user_data.get('id')
-        except Exception as ex:
-            logging.logger.error(ex)
-        finally:
-            resp_data["creator_user"] = resp_data_creator_data
-            resp_data["user_data"] = resp_data_user_data
-            resp_data["user_stats"] = resp_data_user_stats
-            return resp_data
+creator_marketplace_pagination = {}
 
 
 # 爬取tiktok主页
@@ -166,7 +80,7 @@ def get_tiktok_user_data(user_unique_id_list):
                 continue
             user_data = user_info.get("user")
             user_state = user_info.get('stats')
-            data = set_user_info(user_data, user_state, create_user)
+            data = insertUtils.set_user_info_partner(user_data, user_state, create_user)
             warit_excel_data[unique_id] = {}
             warit_excel_data[unique_id]["creator_user"] = data["creator_user"]
             warit_excel_data[unique_id]["user_data"] = data["user_data"]
@@ -182,119 +96,60 @@ def get_tiktok_user_data(user_unique_id_list):
     return warit_excel_data
 
 
-# 根据unique id直接去tiktok主页爬取
-# def get_tiktok_uniqueId(unique_id):
-#     warit_excel_data = {}
-#     if redis_client.get(RedisKeyConstants.redis_user_info_key + unique_id) is not None:
-#         print("uniqueId已存在，进行更新")
-#     url = 'https://www.tiktok.com/@' + str(unique_id)
-#     # 请求头必须添加
-#     headers = {
-#         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
-#                       'Chrome/71.0.3578.98 Safari/537.36',
-#     }
-#     global response
-#     try:
-#         response = requests.get(url=url, headers=headers, timeout=60)
-#     except Exception as ex:
-#         logging.logger.error(ex)
-#         logging.logger.error("\033[31m用户：" + unique_id + "TK官网无法访问，请检查网络!'\033[0m")
-#         return warit_excel_data
-#     # 获取页面原始编码格式
-#     page_text = response.text
-#     tree = etree.HTML(page_text)
-#     li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
-#     try:
-#         if len(li_list) < 1:
-#             return warit_excel_data
-#         response_data = json.loads(li_list[0])
-#         user_detail = response_data.get('__DEFAULT_SCOPE__').get('webapp.user-detail')
-#         print(user_detail)
-#         print("获取TK用户" + str(unique_id) + "主页数据\n")
-#         user_info = user_detail.get('userInfo')  # 用户基本信息 签名(邮箱) uniqueId 头像
-#         if user_info is None:
-#             return warit_excel_data
-#         user_data = user_info.get("user")
-#         user_state = user_info.get('stats')
-#         data = set_user_info(user_data, user_state, {})
-#         warit_excel_data[unique_id] = {}
-#         warit_excel_data[unique_id]["creator_user"] = data["creator_user"]
-#         warit_excel_data[unique_id]["user_data"] = data["user_data"]
-#         warit_excel_data[unique_id]["user_stats"] = data["user_stats"]
-#     except Exception as ex:
-#         logging.logger.error(ex)
-#         return warit_excel_data
-#     return warit_excel_data
-
-
+# 爬取在TAP后台不存在的tiktok用户
 def get_tiktok_uniqueId(unique_id):
     warit_excel_data = {}
-
-    # Check if user exists in Redis and log accordingly
     redis_key = RedisKeyConstants.redis_user_info_key + unique_id
     if redis_client.get(redis_key) is not None:
         print(f"uniqueId {unique_id} already exists, proceeding with update.")
-
     url = f'https://www.tiktok.com/@{unique_id}'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/71.0.3578.98 Safari/537.36',
     }
-
-    # Attempt to fetch TikTok profile page
     try:
         response = requests.get(url=url, headers=headers, timeout=20)  # Lowered timeout to 20 seconds
         response.raise_for_status()  # Raises HTTPError for bad responses
     except requests.exceptions.RequestException as ex:
         logging.logger.error(f"Failed to fetch TikTok page for {unique_id}: {ex}")
         return warit_excel_data
-
     # Parse the HTML response and extract the user data
     try:
         page_text = response.text
         tree = etree.HTML(page_text)
         li_list = tree.xpath('//*[@id="__UNIVERSAL_DATA_FOR_REHYDRATION__"]/text()')
-
         # If no relevant data found, return empty dictionary
         if not li_list:
             logging.logger.warning(f"No user data found for {unique_id} on TikTok.")
             return warit_excel_data
-
         # Load the data from the extracted JSON-like structure
         response_data = json.loads(li_list[0])
         user_detail = response_data.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail')
-
         if not user_detail:
             logging.logger.warning(f"No user details available for {unique_id}.")
             return warit_excel_data
-
         # Log success in fetching user data
         logging.logger.info(f"Successfully fetched user data for {unique_id}.")
-
         # Extract relevant user info
         user_info = user_detail.get('userInfo')
         if not user_info:
             logging.logger.warning(f"No user info found for {unique_id}.")
             return warit_excel_data
-
         user_data = user_info.get("user")
         user_state = user_info.get('stats')
-
         # Call a function to set user information (assuming it exists)
-        data = set_user_info(user_data, user_state, {})
-
+        data = insertUtils.set_user_info_partner(user_data, user_state, {})
         # Store the parsed data in the warit_excel_data dictionary
         warit_excel_data[unique_id] = {
             "creator_user": data["creator_user"],
             "user_data": data["user_data"],
             "user_stats": data["user_stats"],
         }
-
     except (json.JSONDecodeError, KeyError, etree.XMLSyntaxError) as ex:
         logging.logger.error(f"Error processing user data for {unique_id}: {ex}")
         return warit_excel_data
-
     return warit_excel_data
+
 
 # 把总数据量拆分成50每页的数据
 def paginate(total_pages, pages_per_range):
@@ -389,6 +244,7 @@ def get_tiktok_shop_user_unique_id():
         creator_marketplace_pagination["pagination"] = pagination
     return [creator_profile_list, next_pagination.get("has_more")]
 
+# 开始方法
 def start():
     lock_key = "tiktok_TK_record_lock_search_key"
     search_key = "tiktok_TK_record_search_key"
@@ -421,7 +277,7 @@ def start():
                 "query": str(enum[1], encoding='utf-8'),
                 "query_type": 1
             }
-            log_creator.logger.info(f"查询字段:{creator_marketplace_pagination}")
+            logging.logger.info(f"查询字段:{creator_marketplace_pagination}")
             # 开始计时
             t = time.time()
             # 处理数据爬虫
@@ -446,16 +302,16 @@ def start():
                                                                        thread2_user_handle)
                 insert_num = insert_num_1 + insert_num_2
                 update_num = update_num_1 + update_num_2
-                log_creator.logger.info(
+                logging.logger.info(
                     f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(user_list)}条，其中存储{insert_num}条，更新{update_num}条。")
             else:
                 resultData = get_tiktok_uniqueId(str(enum[1], encoding='utf-8'))
                 print(resultData)
                 [insert_num, update_num] = insertUtils.record_data(resultData, [(str(enum[1], encoding='utf-8'))])
-                log_creator.logger.info(
+                logging.logger.info(
                     f"关键字{str(enum[1], encoding='utf-8')}爬取数据总共{len(resultData)}条，其中存储{insert_num}条，更新{update_num}条。")
         except Exception as ex:
-            log_creator.logger.error(ex)
+            logging.logger.error(ex)
 
 
 if __name__ == "__main__":

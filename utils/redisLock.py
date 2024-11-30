@@ -52,6 +52,8 @@ def acquire_lock(lock_name, args=None, acquire_timeout=30, time_out=120):
 def release_lock(lock_name, identifire):
     lock_names = lock_name
     pipe = redis_client.pipeline(True)
+    error_num = 0
+    error_limit_num = 5
     while True:
         try:
             # 通过watch命令监视某个键，当该键未被其他客户端修改值时，事务成功执行。当事务运行过程中，发现该值被其他客户端更新了值，任务失败
@@ -69,6 +71,10 @@ def release_lock(lock_name, identifire):
             pipe.unwatch()
             break
         except Exception as ex:
+            if error_num > error_limit_num:
+                print(f"redisLock - release_lock:error num is limit :{error_num}")
+                break
+            error_num += 1
             print(f"redisLock - release_lock:{ex}")
             time.sleep(10)
             # # 释放锁期间，有其他客户端改变了键值对，锁释放失败，进行循环

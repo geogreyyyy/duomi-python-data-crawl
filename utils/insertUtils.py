@@ -321,7 +321,6 @@ def record_data(data, unique_id_list):
                     # 如果是主键冲突，写入redis
                     if str(ex).find("Duplicate entry") != -1:
                         redis_client.set(redis_user_info_key + handle, json.dumps(data[handle]))
-
         finally:
             redisLock.release_lock(RedisKeyConstants.lock_insert_data, lock)
     return [insert_num, update_num]

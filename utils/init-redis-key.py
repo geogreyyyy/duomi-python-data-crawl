@@ -8,10 +8,11 @@ sys.path.append("..")
 from config import RedisKeyConstants as RedisKeyConstants
 from config import Config
 
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=Config.REDIS_DB,
+redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT, db=1,
                            password=Config.REDIS_PASSWORD)
 
 
+# 初始化redis
 def init_unique_id():
     pipe = redis_client.pipeline()
     redis_user_info_key = RedisKeyConstants.redis_user_info_key
@@ -102,7 +103,15 @@ def init_redis_record_key():
 
 
 if __name__ == '__main__':
+    pipe = redis_client.pipeline()
+    redis_user_info_key = "jOb_product_img:"
+    # 列表中存在key则删除
+    has_key = redis_client.keys(pattern=redis_user_info_key + "*")
+    if len(has_key) != 0:
+        redis_client.delete(*redis_client.keys(redis_user_info_key + "*"))
+
     # init_unique_id()
-    init_redis_search_key()
+    # init_unique_id()
+    # init_redis_search_key()
     # aa = init_redis_record_key()
     # print(aa)
